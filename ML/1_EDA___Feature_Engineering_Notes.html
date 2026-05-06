@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDA & Feature Engineering Notes — Aakash Patil</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #08080c;
+    --paper: #0e0e14;
+    --card: #131320;
+    --border: #1e1e2e;
+    --red: #e85d3a;
+    --amber: #f0a500;
+    --green: #4caf7d;
+    --blue: #5b9bd5;
+    --teal: #2dd4bf;
+    --purple: #a78bfa;
+    --pink: #f472b6;
+    --rose: #fb7185;
+    --indigo: #818cf8;
+    --text: #e0dff0;
+    --muted: #6e6d88;
+    --white: #f0efff;
+    --mono: 'JetBrains Mono', monospace;
+    --serif: 'Instrument Serif', serif;
+    --sans: 'DM Sans', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.7; }
+
+  /* WATERMARK */
+  .watermark {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotate(-35deg);
+    font-family: var(--serif); font-size: 72px;
+    color: rgba(129,140,248,0.04);
+    white-space: nowrap; pointer-events: none; z-index: 0;
+    letter-spacing: 4px; user-select: none;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--paper); border-bottom: 2px solid var(--indigo);
+    padding: 32px 48px 24px; position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .header-left h1 { font-family: var(--serif); font-size: 28px; color: var(--white); letter-spacing: -0.5px; }
+  .header-left p  { color: var(--muted); font-size: 12px; font-family: var(--mono); margin-top: 2px; }
+  .badge { background: var(--indigo); color: #08080c; font-family: var(--mono); font-size: 10px; padding: 4px 10px; border-radius: 2px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
+
+  /* LAYOUT */
+  .container { max-width: 960px; margin: 0 auto; padding: 40px 32px 80px; position: relative; z-index: 1; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--indigo); margin: 48px 0 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* CARD */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 24px 28px; margin-bottom: 16px; }
+  .card h3 { font-family: var(--serif); font-size: 18px; color: var(--white); margin-bottom: 12px; }
+  .card h4 { color: var(--amber); font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin: 16px 0 8px; }
+
+  /* COLORS */
+  .kw     { color: var(--indigo); font-weight: 600; }
+  .red    { color: var(--red);    font-weight: 600; }
+  .amber  { color: var(--amber);  }
+  .green  { color: var(--green);  }
+  .blue   { color: var(--blue);   }
+  .teal   { color: var(--teal);   }
+  .purple { color: var(--purple); }
+  .pink   { color: var(--pink);   }
+  .rose   { color: var(--rose);   }
+  .muted  { color: var(--muted);  }
+
+  /* FORMULA */
+  .formula { background: #05050a; border: 1px solid var(--amber); border-left: 3px solid var(--amber); border-radius: 4px; padding: 12px 16px; font-family: var(--mono); font-size: 13px; color: var(--amber); margin: 12px 0; }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th { background: #05050a; color: var(--indigo); font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 10px 14px; text-align: left; border-bottom: 2px solid var(--border); }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* BULLETS */
+  .bullets { list-style: none; }
+  .bullets li { padding: 4px 0 4px 18px; position: relative; color: var(--text); }
+  .bullets li::before { content: '▸'; position: absolute; left: 0; color: var(--indigo); font-size: 10px; top: 6px; }
+
+  /* GRIDS */
+  .two-col   { display: grid; grid-template-columns: 1fr 1fr;     gap: 16px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  /* CODE */
+  .code { background: #030308; border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; font-family: var(--mono); font-size: 12px; color: #a8a8c8; line-height: 1.9; overflow-x: auto; margin: 10px 0; }
+  .code .c-indigo { color: var(--indigo); }
+  .code .c-red    { color: var(--red);    }
+  .code .c-green  { color: var(--green);  }
+  .code .c-amber  { color: var(--amber);  }
+  .code .c-blue   { color: var(--blue);   }
+  .code .c-teal   { color: var(--teal);   }
+  .code .c-purple { color: var(--purple); }
+  .code .c-pink   { color: var(--pink);   }
+  .code .c-rose   { color: var(--rose);   }
+  .code .c-muted  { color: var(--muted);  }
+
+  /* NOTES */
+  .note        { background: rgba(129,140,248,0.07); border: 1px solid rgba(129,140,248,0.22); border-radius: 4px; padding: 12px 16px; font-size: 13px; margin: 10px 0; }
+  .note-red    { background: rgba(232,93,58,0.08);   border-color: rgba(232,93,58,0.25);   }
+  .note-green  { background: rgba(76,175,125,0.08);  border-color: rgba(76,175,125,0.25);  }
+  .note-amber  { background: rgba(240,165,0,0.08);   border-color: rgba(240,165,0,0.25);   }
+  .note-blue   { background: rgba(91,155,213,0.08);  border-color: rgba(91,155,213,0.25);  }
+  .note-purple { background: rgba(167,139,250,0.08); border-color: rgba(167,139,250,0.25); }
+  .note-teal   { background: rgba(45,212,191,0.07);  border-color: rgba(45,212,191,0.22);  }
+  .note-rose   { background: rgba(251,113,133,0.08); border-color: rgba(251,113,133,0.25); }
+  .note-pink   { background: rgba(244,114,182,0.07); border-color: rgba(244,114,182,0.22); }
+
+  /* TAGS */
+  .tag        { display: inline-block; background: rgba(129,140,248,0.12); color: var(--indigo); border: 1px solid rgba(129,140,248,0.3); font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 2px; margin-right: 4px; letter-spacing: 0.5px; }
+  .tag-green  { background: rgba(76,175,125,0.15);  color: var(--green);  border-color: rgba(76,175,125,0.3);  }
+  .tag-amber  { background: rgba(240,165,0,0.15);   color: var(--amber);  border-color: rgba(240,165,0,0.3);   }
+  .tag-red    { background: rgba(232,93,58,0.15);   color: var(--red);    border-color: rgba(232,93,58,0.3);   }
+  .tag-blue   { background: rgba(91,155,213,0.15);  color: var(--blue);   border-color: rgba(91,155,213,0.3);  }
+  .tag-purple { background: rgba(167,139,250,0.15); color: var(--purple); border-color: rgba(167,139,250,0.3); }
+  .tag-teal   { background: rgba(45,212,191,0.12);  color: var(--teal);   border-color: rgba(45,212,191,0.3);  }
+  .tag-rose   { background: rgba(251,113,133,0.12); color: var(--rose);   border-color: rgba(251,113,133,0.3); }
+
+  /* INTERVIEW BADGE */
+  .interview { display: inline-block; background: rgba(240,165,0,0.12); color: var(--amber); border: 1px solid rgba(240,165,0,0.3); font-family: var(--mono); font-size: 9px; padding: 2px 7px; border-radius: 10px; letter-spacing: 1px; text-transform: uppercase; vertical-align: middle; margin-left: 8px; }
+
+  /* NEW BADGE */
+  .new-badge { display: inline-block; background: rgba(251,113,133,0.18); color: var(--rose); border: 1px solid rgba(251,113,133,0.4); font-family: var(--mono); font-size: 9px; padding: 2px 7px; border-radius: 10px; letter-spacing: 1px; text-transform: uppercase; vertical-align: middle; margin-left: 8px; }
+
+  /* FOOTER */
+  .footer {
+    background: var(--paper); border-top: 2px solid var(--indigo);
+    padding: 28px 48px; margin-top: 60px;
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+  }
+  .footer-name  { font-family: var(--serif); font-size: 18px; color: var(--white); letter-spacing: 1px; }
+  .footer-links { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+  .footer-links a {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--muted); text-decoration: none;
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.5px;
+    padding: 8px 16px; border: 1px solid var(--border); border-radius: 4px; transition: all 0.2s;
+  }
+  .footer-links a:hover { color: var(--white); border-color: var(--indigo); background: rgba(129,140,248,0.08); }
+  .footer-links a svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .footer-copy  { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 1px; }
+
+  @media (max-width: 640px) {
+    .two-col, .three-col { grid-template-columns: 1fr; }
+    .header { padding: 20px 20px 16px; }
+    .container { padding: 24px 16px 60px; }
+    .footer { padding: 24px 20px; }
+  }
+  @media print {
+    .header { position: static; }
+    .watermark { color: rgba(0,0,0,0.04); }
+    body { background: white; color: black; }
+    .card { background: #f5f5ff; border-color: #ddd; break-inside: avoid; }
+    .formula { background: #fff8e0; border-color: #c07000; color: #7a5000; }
+    .code { background: #f0f0f0; color: #333; }
+    .footer { background: #f0efff; border-top: 2px solid #4f46e5; }
+    .footer-links a { border-color: #ccc; color: #333; }
+  }
+</style>
+</head>
+<body>
+
+<div class="watermark">Aakash Patil</div>
+
+<div class="header">
+  <div class="header-left">
+    <h1>EDA & Feature Engineering Notes</h1>
+    <p>// EDA · Missing Values · Outliers · Scaling · Encoding · Imbalanced · Feature Selection · PCA · Data Drift · Cross Validation · Hyperparameter Tuning</p>
+  </div>
+  <span class="badge">EDA · Digital Notes</span>
+</div>
+
+<div class="container">
+
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-title">01 · What is EDA?</div>
+
+  <div class="card">
+    <h3>Exploratory Data Analysis</h3>
+    <p>EDA is the process of <span class="kw">understanding and summarizing</span> the main characteristics of a dataset before applying any machine learning model. It helps discover patterns, detect anomalies, and check assumptions.</p>
+
+    <div class="three-col" style="margin-top:16px">
+      <div style="background:#05050a; border:1px solid rgba(129,140,248,0.25); border-radius:5px; padding:16px;">
+        <div style="font-family:var(--mono); font-size:10px; color:var(--indigo); letter-spacing:1.5px; margin-bottom:8px;">STEP 01</div>
+        <div style="font-weight:600; color:var(--white); margin-bottom:8px;">Profile of Data</div>
+        <ul class="bullets" style="font-size:12px;">
+          <li>No. of rows</li>
+          <li>No. of columns</li>
+          <li>Size of data</li>
+          <li>Missing values</li>
+          <li>Data types (numerical / categorical)</li>
+          <li>Duplicate values</li>
+        </ul>
+      </div>
+      <div style="background:#05050a; border:1px solid rgba(240,165,0,0.25); border-radius:5px; padding:16px;">
+        <div style="font-family:var(--mono); font-size:10px; color:var(--amber); letter-spacing:1.5px; margin-bottom:8px;">STEP 02</div>
+        <div style="font-weight:600; color:var(--white); margin-bottom:8px;">Statistical Analysis</div>
+        <ul class="bullets" style="font-size:12px;">
+          <li>Mean, Median, Mode</li>
+          <li>Std Dev, Min, Max, Quantiles</li>
+          <li>Frequency of categorical columns</li>
+          <li>Variance of columns</li>
+          <li>Covariance of columns</li>
+          <li>t-test, chi-square, ANOVA, z-test</li>
+        </ul>
+      </div>
+      <div style="background:#05050a; border:1px solid rgba(76,175,125,0.25); border-radius:5px; padding:16px;">
+        <div style="font-family:var(--mono); font-size:10px; color:var(--green); letter-spacing:1.5px; margin-bottom:8px;">STEP 03</div>
+        <div style="font-weight:600; color:var(--white); margin-bottom:8px;">Graph-Based Analysis</div>
+        <ul class="bullets" style="font-size:12px;">
+          <li><span class="kw">Histogram</span> — for numerical columns</li>
+          <li><span class="amber">Bar chart</span> — for categorical columns</li>
+          <li><span class="green">Box plot</span> — outlier + distribution check</li>
+          <li><span class="blue">Scatter plot</span> — linearity + correlation</li>
+          <li><span class="purple">Heatmap</span> — correlation between variables</li>
+          <li><span class="teal">KDE</span> — probability density of continuous var</li>
+          <li><span class="pink">Pie chart</span> — proportion of categories</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-title">02 · Feature Engineering / Data Processing</div>
+
+  <div class="card">
+    <h3>What is Feature Engineering?</h3>
+    <p>Feature Engineering is the process of using <span class="kw">domain knowledge</span> to extract and create features from raw data to improve machine learning model performance.</p>
+
+    <!-- Flow diagram -->
+    <div style="text-align:center; margin:20px 0 10px;">
+      <svg viewBox="0 0 640 80" xmlns="http://www.w3.org/2000/svg" style="max-width:640px; width:100%;">
+        <rect x="5"   y="20" width="80" height="36" rx="4" fill="rgba(129,140,248,0.1)" stroke="rgba(129,140,248,0.4)" stroke-width="1.5"/>
+        <text x="45"  y="42" fill="var(--indigo)" font-size="10" font-family="JetBrains Mono" text-anchor="middle">Data Processing</text>
+        <line x1="85" y1="38" x2="103" y2="38" stroke="var(--indigo)" stroke-width="1.5" marker-end="url(#arr)"/>
+        <rect x="103" y="20" width="80" height="36" rx="4" fill="rgba(240,165,0,0.1)"   stroke="rgba(240,165,0,0.4)"   stroke-width="1.5"/>
+        <text x="143" y="42" fill="var(--amber)" font-size="10" font-family="JetBrains Mono" text-anchor="middle">Feat. Extract</text>
+        <line x1="183" y1="38" x2="201" y2="38" stroke="var(--amber)" stroke-width="1.5"/>
+        <rect x="201" y="20" width="80" height="36" rx="4" fill="rgba(76,175,125,0.1)"  stroke="rgba(76,175,125,0.4)"  stroke-width="1.5"/>
+        <text x="241" y="42" fill="var(--green)" font-size="10" font-family="JetBrains Mono" text-anchor="middle">Feat. Scaling</text>
+        <line x1="281" y1="38" x2="299" y2="38" stroke="var(--green)" stroke-width="1.5"/>
+        <rect x="299" y="20" width="80" height="36" rx="4" fill="rgba(91,155,213,0.1)"  stroke="rgba(91,155,213,0.4)"  stroke-width="1.5"/>
+        <text x="339" y="42" fill="var(--blue)" font-size="10" font-family="JetBrains Mono" text-anchor="middle">Modelling</text>
+        <line x1="379" y1="38" x2="397" y2="38" stroke="var(--blue)" stroke-width="1.5"/>
+        <rect x="397" y="20" width="80" height="36" rx="4" fill="rgba(167,139,250,0.1)" stroke="rgba(167,139,250,0.4)" stroke-width="1.5"/>
+        <text x="437" y="42" fill="var(--purple)" font-size="10" font-family="JetBrains Mono" text-anchor="middle">Evaluation</text>
+        <line x1="477" y1="38" x2="495" y2="38" stroke="var(--purple)" stroke-width="1.5"/>
+        <rect x="495" y="20" width="80" height="36" rx="4" fill="rgba(45,212,191,0.1)"  stroke="rgba(45,212,191,0.4)"  stroke-width="1.5"/>
+        <text x="535" y="42" fill="var(--teal)" font-size="10" font-family="JetBrains Mono" text-anchor="middle">Deployment</text>
+        <defs><marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="var(--indigo)"/></marker></defs>
+      </svg>
+    </div>
+
+    <h4>4 Pillars of Feature Engineering</h4>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; margin-top:8px;">
+      <div style="background:#05050a; border:1px solid rgba(129,140,248,0.2); border-radius:4px; padding:12px;">
+        <div style="font-family:var(--mono); font-size:9px; color:var(--indigo); letter-spacing:1px; margin-bottom:6px;">TRANSFORMATION</div>
+        <ul class="bullets" style="font-size:11px;">
+          <li>Missing value imputation</li>
+          <li>Handling categoricals</li>
+          <li>Outlier detection</li>
+          <li>Feature scaling</li>
+          <li>Data transformation</li>
+          <li>Encoding</li>
+          <li>Imbalanced data</li>
+        </ul>
+      </div>
+      <div style="background:#05050a; border:1px solid rgba(240,165,0,0.2); border-radius:4px; padding:12px;">
+        <div style="font-family:var(--mono); font-size:9px; color:var(--amber); letter-spacing:1px; margin-bottom:6px;">CONSTRUCTION</div>
+        <ul class="bullets" style="font-size:11px;">
+          <li>Feature construction</li>
+          <li>Feature splitting</li>
+        </ul>
+      </div>
+      <div style="background:#05050a; border:1px solid rgba(76,175,125,0.2); border-radius:4px; padding:12px;">
+        <div style="font-family:var(--mono); font-size:9px; color:var(--green); letter-spacing:1px; margin-bottom:6px;">SELECTION</div>
+        <ul class="bullets" style="font-size:11px;">
+          <li>Filter method</li>
+          <li>Wrapper method</li>
+          <li>Embedded method</li>
+          <li>Hybrid method</li>
+        </ul>
+      </div>
+      <div style="background:#05050a; border:1px solid rgba(167,139,250,0.2); border-radius:4px; padding:12px;">
+        <div style="font-family:var(--mono); font-size:9px; color:var(--purple); letter-spacing:1px; margin-bottom:6px;">EXTRACTION</div>
+        <ul class="bullets" style="font-size:11px;">
+          <li>PCA</li>
+          <li>LDA</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-title">03 · Handling Missing Values</div>
+
+  <div class="card">
+    <h3>Why Handle Missing Values? <span class="interview">interview ★</span></h3>
+    <p>Missing data decreases predictive power. Applying algorithms on missing data introduces <span class="red">bias in parameter estimation</span> — you cannot trust results if missing values are not handled.</p>
+
+    <h4>Reasons for Missing Values</h4>
+    <ul class="bullets">
+      <li>People do not give information (survey skips)</li>
+      <li>Inaccuracy during data collection</li>
+      <li>Data accumulated from various past records</li>
+      <li>Equipment inconsistency leading to faulty measurement</li>
+    </ul>
+
+    <h4>Types of Missing Values <span class="interview">interview ★</span></h4>
+    <table>
+      <tr><th>Type</th><th>Full Form</th><th>Meaning</th><th>Example</th></tr>
+      <tr>
+        <td><span class="kw">MCAR</span></td>
+        <td>Missing Completely At Random</td>
+        <td>No pattern — purely random missing</td>
+        <td>Random sensor failure</td>
+      </tr>
+      <tr>
+        <td><span class="amber">MAR</span></td>
+        <td>Missing At Random</td>
+        <td>Missingness depends on other observed variables</td>
+        <td>Income missing more for younger people</td>
+      </tr>
+      <tr>
+        <td><span class="red">NMAR</span></td>
+        <td>Not Missing At Random</td>
+        <td>Missingness depends on the missing value itself (intentional)</td>
+        <td>High-income earners skip income question</td>
+      </tr>
+    </table>
+
+    <h4>How to Deal with Missing Values</h4>
+    <div class="two-col" style="margin-top:8px">
+      <div>
+        <h4 style="color:var(--blue)">CCA — Complete Case Analysis</h4>
+        <ul class="bullets">
+          <li>Simply drop rows with missing values</li>
+          <li>Only valid when data is <span class="blue">MCAR</span></li>
+          <li>Risk: lose too much data</li>
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:var(--green)">Imputation</h4>
+        <div class="two-col" style="gap:8px; margin-top:4px;">
+          <div>
+            <p style="font-size:12px; color:var(--muted); margin-bottom:4px;">Simple (1 column at a time)</p>
+            <ul class="bullets" style="font-size:12px;">
+              <li><span class="kw">Numerical:</span> Mean / Median / Random / End of distribution</li>
+              <li><span class="amber">Categorical:</span> Mode / "Missing" as new category</li>
+            </ul>
+          </div>
+          <div>
+            <p style="font-size:12px; color:var(--muted); margin-bottom:4px;">Multivariate (all columns)</p>
+            <ul class="bullets" style="font-size:12px;">
+              <li>KNN Imputer</li>
+              <li>Iterative Imputer (MICE)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note note-amber" style="margin-top:12px">
+      <span class="amber">Rule of thumb:</span> Use <strong>Mean</strong> when data is normally distributed. Use <strong>Median</strong> when data has outliers (skewed). Use <strong>Mode</strong> for categorical data.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-title">04 · Handling Outliers</div>
+
+  <div class="card">
+    <h3>What are Outliers? <span class="interview">interview ★</span></h3>
+    <p>Outliers are data points that are <span class="red">far separate from the majority</span> of data points. If not handled during EDA, they lead to biased model results and poor business decisions.</p>
+
+    <div class="note note-red">
+      <span class="red">Impact on algorithms:</span> Affects Linear Regression, Logistic Regression, AdaBoost, Deep Learning. <span class="green">Tree-based algorithms (Random Forest, XGBoost) are NOT affected by outliers.</span>
+    </div>
+
+    <h4>How to Detect Outliers</h4>
+    <table>
+      <tr><th>Method</th><th>When to Use</th><th>How</th></tr>
+      <tr><td><span class="kw">Z-Score</span></td><td>Data is Normally Distributed</td><td>|Z| > 3 → outlier. Z = (x − μ) / σ</td></tr>
+      <tr><td><span class="kw">Box Plot (IQR)</span></td><td>Data is NOT Normally Distributed</td><td>Below Q1 − 1.5×IQR or above Q3 + 1.5×IQR</td></tr>
+      <tr><td><span class="kw">Percentile-based</span></td><td>General purpose</td><td>Decide upper/lower tail (e.g. 1%–99%)</td></tr>
+    </table>
+
+    <h4>How to Deal with Outliers</h4>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; margin-top:8px;">
+      <div style="background:#05050a; border:1px solid var(--border); border-radius:4px; padding:12px; text-align:center;">
+        <div style="color:var(--red); font-weight:600; margin-bottom:4px;">Trimming</div>
+        <p style="font-size:11px; color:var(--muted);">Completely remove the outlier rows</p>
+      </div>
+      <div style="background:#05050a; border:1px solid var(--border); border-radius:4px; padding:12px; text-align:center;">
+        <div style="color:var(--amber); font-weight:600; margin-bottom:4px;">Capping</div>
+        <p style="font-size:11px; color:var(--muted);">Fix upper/lower limit (upper tail + lower tail)</p>
+      </div>
+      <div style="background:#05050a; border:1px solid var(--border); border-radius:4px; padding:12px; text-align:center;">
+        <div style="color:var(--blue); font-weight:600; margin-bottom:4px;">Missing Value</div>
+        <p style="font-size:11px; color:var(--muted);">Treat outlier as missing → impute</p>
+      </div>
+      <div style="background:#05050a; border:1px solid var(--border); border-radius:4px; padding:12px; text-align:center;">
+        <div style="color:var(--green); font-weight:600; margin-bottom:4px;">Discretization</div>
+        <p style="font-size:11px; color:var(--muted);">Group into bins (mygroup)</p>
+      </div>
+    </div>
+
+    <div class="formula" style="margin-top:14px;">IQR = Q3 − Q1 &nbsp;|&nbsp; Lower = Q1 − 1.5×IQR &nbsp;|&nbsp; Upper = Q3 + 1.5×IQR</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-title">05 · Feature Scaling</div>
+
+  <div class="card">
+    <h3>Why Scale? <span class="interview">interview ★</span></h3>
+    <p>If features have varying scales, large-scale features <span class="red">dominate</span> the model. Scaling brings all features into a comparable range, ensuring optimization algorithms converge faster and more stably.</p>
+
+    <div class="note note-amber">
+      <span class="amber">No effect on:</span> Decision Trees, Random Forest, XGBoost — tree-based algorithms are not distance-based, so scaling doesn't affect them.
+    </div>
+
+    <div class="two-col" style="margin-top:16px">
+      <div>
+        <h4>1. Standardization <span class="tag">Z-Score Normalization</span></h4>
+        <div class="formula">x' = (x − mean) / std_dev</div>
+        <ul class="bullets">
+          <li>Mean = 0, Std Dev = 1</li>
+          <li>Range: (−∞, +∞) — no fixed bounds</li>
+          <li>Typical range: (−3, +3)</li>
+          <li>Use when data is <span class="kw">normally distributed</span></li>
+          <li>Works well with Gradient Descent, SVM, Neural Nets</li>
+        </ul>
+        <div class="note" style="margin-top:8px; font-size:12px">
+          sklearn: <span class="kw">StandardScaler()</span>
+        </div>
+      </div>
+      <div>
+        <h4>2. Normalization <span class="tag">Min-Max Scaling</span></h4>
+        <div class="formula">x' = (x − min) / (max − min)</div>
+        <ul class="bullets">
+          <li>Min = 0, Max = 1</li>
+          <li>Range: [0, 1] — fixed bounds</li>
+          <li>Use when data has a <span class="amber">fixed range</span></li>
+          <li>Use for CNN image input (0 to 255 → 0 to 1)</li>
+          <li>Sensitive to outliers</li>
+        </ul>
+        <div class="note note-amber" style="margin-top:8px; font-size:12px">
+          sklearn: <span class="amber">MinMaxScaler()</span>
+        </div>
+      </div>
+    </div>
+
+    <h4>Advantages of Scaling</h4>
+    <table>
+      <tr><th>Benefit</th><th>Explanation</th></tr>
+      <tr><td><span class="kw">Faster Training</span></td><td>Leads to faster convergence during optimization</td></tr>
+      <tr><td><span class="kw">Better Generalization</span></td><td>All features contribute equally — no domination</td></tr>
+      <tr><td><span class="kw">Algorithm Stability</span></td><td>Optimization algorithms work more smoothly</td></tr>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-title">06 · Data Transformation</div>
+
+  <div class="card">
+    <h3>What is Data Transformation?</h3>
+    <p>Applying mathematical functions to <span class="kw">convert the PDF (Probability Density Function)</span> of a column to be closer to a Normal Distribution — leads to better model performance.</p>
+
+    <div class="note note-amber">
+      <span class="amber">Why necessary?</span> Skewed data makes it difficult to identify meaningful patterns. Skewness introduces bias into statistical analysis. Converting to normal helps linear models perform better.
+    </div>
+
+    <div class="two-col" style="margin-top:14px">
+      <div>
+        <h4>Function Transformations</h4>
+        <table>
+          <tr><th>Method</th><th>Used For</th></tr>
+          <tr><td><span class="kw">Log (log x)</span></td><td>+ve skewed (right skewed) data</td></tr>
+          <tr><td><span class="kw">Reciprocal (1/x)</span></td><td>Convert large → small, small → large</td></tr>
+          <tr><td><span class="kw">Square (x²)</span></td><td>Left skewed data</td></tr>
+          <tr><td><span class="kw">Square Root (√x)</span></td><td>Mild right skew — not used much</td></tr>
+          <tr><td><span class="kw">Custom</span></td><td>Domain-specific transformations</td></tr>
+        </table>
+      </div>
+      <div>
+        <h4>Power Transformations</h4>
+        <table>
+          <tr><th>Method</th><th>Constraint</th><th>Used For</th></tr>
+          <tr><td><span class="kw">Box-Cox</span></td><td>x > 0 only</td><td>Positive data only</td></tr>
+          <tr><td><span class="kw">Yeo-Johnson</span></td><td>All values</td><td>Both −ve and +ve data</td></tr>
+        </table>
+        <div class="note" style="margin-top:10px; font-size:12px">
+          Power transformations work better than function transformations — try both and select whichever gives better results.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-title">07 · Encoding Categorical Features</div>
+
+  <div class="card">
+    <h3>Why Encode? <span class="interview">interview ★</span></h3>
+    <p>ML algorithms require <span class="kw">numerical data</span>. Categorical variables represent qualitative attributes — they must be converted to numerical form through encoding.</p>
+
+    <div class="three-col" style="margin-top:14px">
+      <div>
+        <h4>1. Label Encoding</h4>
+        <ul class="bullets">
+          <li>Assign integer to each category</li>
+          <li>S, M, L, XL, XXL → 1, 2, 3, 4, 5</li>
+          <li>Use for <span class="kw">ordinal data</span> (order matters)</li>
+          <li>Example: Rating: 1★, 2★, 3★</li>
+        </ul>
+        <div class="note note-amber" style="margin-top:8px; font-size:11px">
+          ⚠️ Can imply false ordering in nominal data
+        </div>
+      </div>
+      <div>
+        <h4>2. One-Hot Encoding</h4>
+        <ul class="bullets">
+          <li>Creates new binary column per category</li>
+          <li>Red, Green, Blue → 3 columns (0/1)</li>
+          <li>Use for <span class="kw">nominal data</span> (no order)</li>
+          <li>Dummy variable trap — drop one column</li>
+        </ul>
+        <div class="note note-blue" style="margin-top:8px; font-size:11px">
+          Use when categories are few (&lt;10)
+        </div>
+      </div>
+      <div>
+        <h4>3. Binary Encoding</h4>
+        <ul class="bullets">
+          <li>Convert to binary representation</li>
+          <li>Fewer columns than one-hot</li>
+          <li>Good for <span class="kw">high-cardinality</span> features</li>
+          <li>Example: 100 categories → ~7 binary cols</li>
+        </ul>
+        <div class="note note-purple" style="margin-top:8px; font-size:11px">
+          Use when many unique categories exist
+        </div>
+      </div>
+    </div>
+
+    <h4>Encoding Summary</h4>
+    <table>
+      <tr><th>Encoding</th><th>Data Type</th><th>Cardinality</th><th>Use When</th></tr>
+      <tr><td><span class="kw">Label</span></td><td>Ordinal</td><td>Any</td><td>Order matters (S&lt;M&lt;L&lt;XL)</td></tr>
+      <tr><td><span class="kw">One-Hot</span></td><td>Nominal</td><td>Low (&lt;10)</td><td>No order, few categories</td></tr>
+      <tr><td><span class="kw">Binary</span></td><td>Nominal</td><td>High</td><td>Many unique values</td></tr>
+      <tr><td><span class="kw">Target</span></td><td>Nominal</td><td>High</td><td>Replace category with target mean</td></tr>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-title">08 · Imbalanced Data</div>
+
+  <div class="card">
+    <h3>What is Class Imbalance? <span class="interview">interview ★</span></h3>
+    <p>Data imbalance occurs when the distribution of classes in a dataset is <span class="red">uneven</span> — one class significantly outnumbers another. ML algorithms become biased towards the majority class.</p>
+
+    <div class="note note-red" style="margin-top:10px">
+      <span class="red">Why it matters:</span> Model trained on imbalanced data often learns to predict the majority class always → high accuracy but poor recall for minority class. Standard accuracy becomes misleading.
+    </div>
+
+    <h4>Techniques to Handle Imbalance</h4>
+    <div class="three-col" style="margin-top:8px">
+      <div style="background:#05050a; border:1px solid rgba(232,93,58,0.3); border-radius:5px; padding:16px;">
+        <div style="font-family:var(--mono); font-size:10px; color:var(--red); letter-spacing:1px; margin-bottom:8px;">UNDERSAMPLING</div>
+        <p style="font-size:12px; margin-bottom:8px;">Reduce majority class representation by removing samples</p>
+        <div class="code" style="font-size:10px; padding:8px;">
+0: 233017 → <span class="c-red">133</span>
+1:    347 →  347
+        </div>
+        <ul class="bullets" style="font-size:11px; margin-top:6px;">
+          <li>Reduces by 80%</li>
+          <li>Applied when lots of data</li>
+          <li>Risk: lose useful data</li>
+        </ul>
+      </div>
+      <div style="background:#05050a; border:1px solid rgba(76,175,125,0.3); border-radius:5px; padding:16px;">
+        <div style="font-family:var(--mono); font-size:10px; color:var(--green); letter-spacing:1px; margin-bottom:8px;">OVERSAMPLING</div>
+        <p style="font-size:12px; margin-bottom:8px;">Increase minority class representation by duplicating samples</p>
+        <div class="code" style="font-size:10px; padding:8px;">
+0: 233017 → 233017
+1:    347 → <span class="c-green">33508</span>
+        </div>
+        <ul class="bullets" style="font-size:11px; margin-top:6px;">
+          <li>Increases by 50%+</li>
+          <li>Risk: overfitting duplicate data</li>
+        </ul>
+      </div>
+      <div style="background:#05050a; border:1px solid rgba(167,139,250,0.3); border-radius:5px; padding:16px;">
+        <div style="font-family:var(--mono); font-size:10px; color:var(--purple); letter-spacing:1px; margin-bottom:8px;">SMOTE</div>
+        <p style="font-size:12px; margin-bottom:8px;">Synthetic Minority Oversampling Technique — generates synthetic samples by interpolating between existing minority samples</p>
+        <ul class="bullets" style="font-size:11px; margin-top:6px;">
+          <li>Combination of under + oversampling</li>
+          <li>Based on nearest neighbours</li>
+          <li>Parameter: pct (0–1, 2–100)</li>
+          <li>More diverse than simple duplication</li>
+        </ul>
+      </div>
+    </div>
+
+    <h4>Conclusion</h4>
+    <div class="note" style="margin-top:8px">
+      Focus on <strong>Precision, Recall, F1 Score</strong> — not accuracy. Use domain knowledge to reduce FP or FN. Based on that, select ROC score or probability threshold (e.g. 0.1–0.6). Use SMOTE + oversampling techniques with Ensemble methods (RF, XGBoost) providing class_weight parameters.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-title">09 · Curse of Dimensionality</div>
+
+  <div class="card">
+    <h3>What is it? <span class="interview">interview ★</span></h3>
+    <p>There is an optimal number of features for best accuracy. If features are increased beyond that, <span class="red">accuracy decreases</span> because data becomes sparse, computational complexity increases, and algorithm efficiency reduces.</p>
+
+    <div class="two-col" style="margin-top:14px">
+      <div>
+        <h4>The Problem</h4>
+        <ul class="bullets">
+          <li>Data <span class="kw">sparsity</span> — in high-dim space, points get far from each other</li>
+          <li>Every element or value within dataset, matrix or vector may be zero or empty</li>
+          <li>Algorithms that rely on dense data struggle</li>
+          <li>Performance decreases, computational cost increases</li>
+        </ul>
+        <div class="note note-amber" style="margin-top:10px; font-size:12px">
+          Used for high-dimensional data: <span class="amber">Images</span> and <span class="amber">Text</span>
+        </div>
+      </div>
+      <div>
+        <h4>Solutions</h4>
+        <ul class="bullets">
+          <li><span class="kw">Feature Selection</span> — select relevant subset, remove redundant features</li>
+          <li><span class="kw">Feature Extraction</span> — create new lower-dimensional features</li>
+        </ul>
+        <h4>Problems Caused</h4>
+        <ul class="bullets">
+          <li>Performance decreases</li>
+          <li>Computational cost increases</li>
+        </ul>
+        <h4>Resolution Methods</h4>
+        <ul class="bullets">
+          <li>Feature Selection → Forward / Backward</li>
+          <li>Feature Extraction → PCA / LDA</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-title">10 · Feature Selection</div>
+
+  <div class="card">
+    <h3>What is Feature Selection? <span class="interview">interview ★</span></h3>
+    <p>Process of selecting the most important subset of features from a large dataset. Applied on <span class="kw">training data only</span> — never on test data (risk of data leakage).</p>
+
+    <h4>Why Necessary?</h4>
+    <ul class="bullets">
+      <li>Cure the <span class="kw">Curse of Dimensionality</span></li>
+      <li>Decrease <span class="kw">computational cost</span></li>
+      <li>Improve <span class="kw">interpretability</span></li>
+      <li>Reduce inference time, improve accuracy</li>
+    </ul>
+
+    <div class="three-col" style="margin-top:16px">
+      <!-- FILTER -->
+      <div style="background:#05050a; border:1px solid rgba(91,155,213,0.3); border-radius:5px; padding:14px;">
+        <div style="font-family:var(--mono); font-size:10px; color:var(--blue); letter-spacing:1px; margin-bottom:8px;">1. FILTER METHOD</div>
+        <ul class="bullets" style="font-size:12px;">
+          <li>Duplicate column removal</li>
+          <li>Variance Threshold</li>
+          <li>Correlation</li>
+          <li>ANOVA</li>
+          <li>Chi-Square</li>
+          <li>Mutual Information</li>
+        </ul>
+      </div>
+      <!-- WRAPPER -->
+      <div style="background:#05050a; border:1px solid rgba(240,165,0,0.3); border-radius:5px; padding:14px;">
+        <div style="font-family:var(--mono); font-size:10px; color:var(--amber); letter-spacing:1px; margin-bottom:8px;">2. WRAPPER METHOD</div>
+        <ul class="bullets" style="font-size:12px;">
+          <li>Exhaustive Feature Selection</li>
+          <li>Forward Selection</li>
+          <li>Backward Elimination</li>
+          <li>Recursive Feature Elimination (RFE)</li>
+        </ul>
+      </div>
+      <!-- EMBEDDED -->
+      <div style="background:#05050a; border:1px solid rgba(76,175,125,0.3); border-radius:5px; padding:14px;">
+        <div style="font-family:var(--mono); font-size:10px; color:var(--green); letter-spacing:1px; margin-bottom:8px;">3. EMBEDDED METHOD</div>
+        <ul class="bullets" style="font-size:12px;">
+          <li>Lasso (L1 Regularization)</li>
+          <li>Ridge (L2 Regularization)</li>
+          <li>Tree-based importance (RF, XGBoost)</li>
+          <li>Elastic Net</li>
+        </ul>
+      </div>
+    </div>
+
+    <h4>Filter Method — Key Techniques</h4>
+    <table style="margin-top:8px">
+      <tr><th>Technique</th><th>When to Use</th><th>How</th></tr>
+      <tr><td><span class="kw">Variance Threshold</span></td><td>Feature has near-zero variance</td><td>Remove constant feature (variance = 0) or quasi-constant features</td></tr>
+      <tr><td><span class="kw">Correlation</span></td><td>Input/Input — numerical</td><td>If |corr| &gt; 0.7–0.8 between two features → remove one</td></tr>
+      <tr><td><span class="kw">ANOVA</span></td><td>Input numerical → Output categorical</td><td>Keep features with strong F1-Y relation</td></tr>
+      <tr><td><span class="kw">Chi-Square</span></td><td>Input categorical → Output categorical</td><td>Study difference between ideal and real data; compare p-value</td></tr>
+      <tr><td><span class="kw">Mutual Information</span></td><td>Any → Any</td><td>Measures amount of info shared between feature and target</td></tr>
+    </table>
+
+    <h4>Wrapper Method — Forward vs Backward</h4>
+    <div class="two-col" style="margin-top:8px">
+      <div>
+        <h4 style="color:var(--green)">Forward Selection</h4>
+        <ul class="bullets" style="font-size:12px;">
+          <li>Start with zero features</li>
+          <li>Add one feature at a time</li>
+          <li>At each stage: select feature that improves model most</li>
+          <li>Stop when no improvement</li>
+          <li>Complexity: n(n+1)/2</li>
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:var(--red)">Backward Elimination</h4>
+        <ul class="bullets" style="font-size:12px;">
+          <li>Start with ALL features</li>
+          <li>Remove least important one at a time</li>
+          <li>Stop when removing hurts performance</li>
+          <li>Complexity: n(n+1)/2</li>
+          <li>Disadvantage: local selection (may miss best)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-title">11 · Feature Extraction — PCA & LDA</div>
+
+  <div class="card">
+    <h3>Feature Extraction vs Feature Selection</h3>
+    <table>
+      <tr><th></th><th>Feature Selection</th><th>Feature Extraction</th></tr>
+      <tr><td><span class="kw">What</span></td><td>Select subset of existing features</td><td>Create NEW features from existing ones</td></tr>
+      <tr><td><span class="kw">Original features</span></td><td>Retained as-is</td><td>Transformed — not interpretable</td></tr>
+      <tr><td><span class="kw">Examples</span></td><td>Filter, Wrapper, Embedded</td><td>PCA, LDA</td></tr>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <h3><span class="kw">PCA</span> — Principal Component Analysis <span class="interview">interview ★★</span></h3>
+      <span class="tag">Unsupervised</span> <span class="tag-purple tag">Dimensionality Reduction</span>
+      <p style="margin-top:10px">Transforms high-dimensional data into lower-dimensional space while <span class="kw">retaining most important information</span> and minimizing information loss.</p>
+
+      <h4>Purpose</h4>
+      <ul class="bullets">
+        <li><span class="kw">Dimensionality Reduction</span> — reduce no. of features, retain key info → faster + simpler model</li>
+        <li><span class="kw">Data Visualization</span> — visualize high-dim data in 2D/3D (100D → 3D/2D)</li>
+        <li><span class="kw">Noise Reduction</span> — remove noise, focus on dominant patterns</li>
+      </ul>
+
+      <h4>How PCA Works — Step by Step</h4>
+      <div class="code" style="font-size:11px;">
+<span class="c-indigo">Step 1:</span> Center the data — subtract mean of each feature
+<span class="c-indigo">Step 2:</span> Calculate Covariance Matrix
+         (captures variance between each pair of features)
+<span class="c-indigo">Step 3:</span> Compute Eigen Values & Eigen Vectors
+         Eigen Vector = represent PC (direction of max variance)
+         Eigen Value  = how much variance each PC explains
+<span class="c-indigo">Step 4:</span> Sort by Variance — arrange Eigen Vectors by Eigen Value
+         (highest to lowest variance)
+<span class="c-indigo">Step 5:</span> Project Data on Principal Components
+         Select subset of Eigen Vectors to reduce dimensionality
+      </div>
+
+      <h4>Finding Optimal No. of PCs</h4>
+      <div class="formula" style="font-size:12px;">λ₁ + λ₂ + ... + λₖ ≥ 90% of (λ₁ + λ₂ + ... + λₙ)</div>
+      <p style="font-size:12px; margin-top:4px">Keep components until cumulative variance ≥ 90%</p>
+
+      <h4>When PCA Does NOT Work</h4>
+      <ul class="bullets" style="font-size:12px;">
+        <li>Variance of x and y is the same</li>
+        <li>When projection can't differentiate the data</li>
+        <li>Pattern y = x² — losing piece of information</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3><span class="purple">LDA</span> — Linear Discriminant Analysis <span class="interview">interview ★</span></h3>
+      <span class="tag-purple tag">Supervised</span> <span class="tag-purple tag">Classification</span>
+      <p style="margin-top:10px">Dimensionality reduction technique for <span class="purple">supervised classification</span> problems. Projects features from high-dim space to lower dim space (2D to 1D) while maximizing class separation.</p>
+
+      <h4>Goal</h4>
+      <ul class="bullets">
+        <li>Maximize <span class="purple">separation between classes</span></li>
+        <li>Minimize <span class="purple">variance within each class</span></li>
+        <li>Result: lower-dimensional space for classification/visualization</li>
+      </ul>
+
+      <h4>Criteria</h4>
+      <ul class="bullets">
+        <li>Class distance between means of 2 classes ↑</li>
+        <li>Class variation within each class ↓</li>
+      </ul>
+
+      <h4>How LDA Works — Step by Step</h4>
+      <div class="code" style="font-size:11px;">
+<span class="c-purple">Step 1:</span> Compute mean of dependent variable
+<span class="c-purple">Step 2:</span> Calculate covariance matrix of class variable
+<span class="c-purple">Step 3:</span> Compute Within-class Scatter Matrix (Sw+Se)
+<span class="c-purple">Step 4:</span> Calculate Between-class Scatter Matrix
+<span class="c-purple">Step 5:</span> Compute Eigen Vectors & Eigen Values (within class + between scatter)
+<span class="c-purple">Step 6:</span> Sort values of Eigen Vector by Eigen Value
+<span class="c-purple">Step 7:</span> Find Eigen Vector corresponding to k Eigen Values
+<span class="c-purple">Step 8:</span> Obtain LDA — dot product of Eigen Vector with original data
+      </div>
+
+      <h4>PCA vs LDA</h4>
+      <table>
+        <tr><th></th><th>PCA</th><th>LDA</th></tr>
+        <tr><td>Type</td><td>Unsupervised</td><td>Supervised</td></tr>
+        <tr><td>Goal</td><td>Max variance</td><td>Max class separation</td></tr>
+        <tr><td>Uses labels</td><td>No</td><td>Yes</td></tr>
+        <tr><td>Best for</td><td>General reduction</td><td>Classification + viz</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-title">12 · Feature Construction & Splitting</div>
+
+  <div class="card">
+    <div class="two-col">
+      <div>
+        <h3>Feature Construction</h3>
+        <p>Create new and useful features from existing ones using <span class="kw">domain knowledge</span>.</p>
+        <h4>Example</h4>
+        <div class="code" style="font-size:11px;">
+Family Size = 0-2 (Single) → 1-4 (Small family) → 4+ (Large family)
+<span class="c-indigo">We can drop original col & keep Family_Type col</span>
+
+Current Year - Join Year = Years of Experience
+<span class="c-indigo">We can keep "year added" col & drop original</span>
+        </div>
+      </div>
+      <div>
+        <h3>Feature Splitting</h3>
+        <p>Create new feature by <span class="amber">splitting</span> a single feature into multiple meaningful parts.</p>
+        <h4>Example</h4>
+        <div class="code" style="font-size:11px;">
+Name: "Barwad, Mr. John Harris"
+         ↓  Split on ","
+Name  →  Title (Mr)
+         Last Name (Barwad)
+         First Name (John Harris)
+
+<span class="c-amber">From single feature we create 3 new features</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- DATA DRIFT — NEW SECTION -->
+  <div class="section-title">13 · Data Drift <span class="new-badge">Added</span></div>
+
+  <div class="card">
+    <h3>What is Data Drift? <span class="interview">interview ★★</span></h3>
+    <p>Data Drift (also called <span class="kw">Dataset Shift</span>) occurs when the <span class="red">statistical properties of input data change over time</span> after a model is deployed — causing model performance to degrade even though the model itself hasn't changed.</p>
+
+    <div class="note note-rose" style="margin-top:12px">
+      <span class="rose">Core Problem:</span> A model trained on historical data may perform well initially, but as the real-world data distribution shifts over time, the model becomes less accurate. <strong>The world changes — the model doesn't.</strong>
+    </div>
+
+    <h4>Simple Analogy</h4>
+    <div class="code">
+<span class="c-amber">Scenario:</span> You train a spam filter in 2020.
+By 2024, spammers use new words, new patterns, new tactics.
+→ Your model still looks for old patterns.
+→ <span class="c-red">Performance drops — this is Data Drift.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Types of Data Drift <span class="interview">interview ★★</span></h3>
+
+    <div class="three-col" style="margin-top:8px">
+      <div style="background:#05050a; border:1px solid rgba(232,93,58,0.3); border-radius:5px; padding:16px;">
+        <div style="font-family:var(--mono); font-size:10px; color:var(--red); letter-spacing:1px; margin-bottom:8px;">1. COVARIATE SHIFT</div>
+        <p style="font-size:13px; font-weight:600; color:var(--white); margin-bottom:6px;">Input distribution changes</p>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:8px;">P(X) changes but P(Y|X) remains same</p>
+        <ul class="bullets" style="font-size:12px;">
+          <li>Most common type</li>
+          <li>Feature values shift</li>
+          <li>Example: model trained on young users, now used by older users — age distribution shifted</li>
+        </ul>
+      </div>
+      <div style="background:#05050a; border:1px solid rgba(240,165,0,0.3); border-radius:5px; padding:16px;">
+        <div style="font-family:var(--mono); font-size:10px; color:var(--amber); letter-spacing:1px; margin-bottom:8px;">2. LABEL / CONCEPT DRIFT</div>
+        <p style="font-size:13px; font-weight:600; color:var(--white); margin-bottom:6px;">Relationship between X and Y changes</p>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:8px;">P(Y|X) changes — same features, different meaning</p>
+        <ul class="bullets" style="font-size:12px;">
+          <li>Model logic becomes outdated</li>
+          <li>Example: "Fraud" behavior patterns change — old fraud rules no longer apply</li>
+          <li>Customer preferences shift</li>
+        </ul>
+      </div>
+      <div style="background:#05050a; border:1px solid rgba(167,139,250,0.3); border-radius:5px; padding:16px;">
+        <div style="font-family:var(--mono); font-size:10px; color:var(--purple); letter-spacing:1px; margin-bottom:8px;">3. PRIOR PROBABILITY SHIFT</div>
+        <p style="font-size:13px; font-weight:600; color:var(--white); margin-bottom:6px;">Output distribution changes</p>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:8px;">P(Y) changes — class proportions shift</p>
+        <ul class="bullets" style="font-size:12px;">
+          <li>Class balance shifts over time</li>
+          <li>Example: fraud rate was 1% at training, now 10% in production</li>
+          <li>Seasonal changes in classes</li>
+        </ul>
+      </div>
+    </div>
+
+    <h4>Data Drift vs Model Drift</h4>
+    <table style="margin-top:8px">
+      <tr><th></th><th>Data Drift</th><th>Model Drift</th></tr>
+      <tr><td><span class="kw">What changes</span></td><td>Input/Output data distribution</td><td>Model performance metrics</td></tr>
+      <tr><td><span class="kw">Cause</span></td><td>Real-world patterns shift</td><td>Data drift OR model degradation</td></tr>
+      <tr><td><span class="kw">Detection</span></td><td>Statistical tests on data</td><td>Monitor accuracy, F1, AUC</td></tr>
+      <tr><td><span class="kw">Fix</span></td><td>Retrain model on new data</td><td>Retrain, revalidate, redeploy</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>How to Detect Data Drift <span class="interview">interview ★</span></h3>
+
+    <div class="two-col" style="margin-top:8px">
+      <div>
+        <h4>Statistical Tests</h4>
+        <table>
+          <tr><th>Test</th><th>Data Type</th><th>What it Checks</th></tr>
+          <tr><td><span class="kw">KS Test</span></td><td>Numerical</td><td>Kolmogorov-Smirnov: compares two distributions</td></tr>
+          <tr><td><span class="kw">Chi-Square</span></td><td>Categorical</td><td>Distribution shift in categories</td></tr>
+          <tr><td><span class="kw">PSI</span></td><td>Any</td><td>Population Stability Index — most common in banking</td></tr>
+          <tr><td><span class="kw">Jensen-Shannon</span></td><td>Any</td><td>Measures divergence between two distributions</td></tr>
+          <tr><td><span class="kw">Wasserstein</span></td><td>Numerical</td><td>Earth mover's distance — how much distribution shifts</td></tr>
+        </table>
+      </div>
+      <div>
+        <h4>PSI — Population Stability Index <span class="interview">interview ★</span></h4>
+        <div class="formula" style="font-size:11px;">PSI = Σ (Actual% − Expected%) × ln(Actual% / Expected%)</div>
+        <table style="margin-top:8px">
+          <tr><th>PSI Value</th><th>Interpretation</th></tr>
+          <tr><td><span class="green">&lt; 0.1</span></td><td>No significant drift ✅</td></tr>
+          <tr><td><span class="amber">0.1 – 0.2</span></td><td>Moderate drift — monitor closely</td></tr>
+          <tr><td><span class="red">&gt; 0.2</span></td><td>Significant drift — retrain model ❌</td></tr>
+        </table>
+        <div class="note" style="margin-top:8px; font-size:12px">
+          PSI is widely used in <span class="kw">credit risk and banking</span> models to monitor production performance.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>How to Handle Data Drift</h3>
+
+    <div class="two-col" style="margin-top:8px">
+      <div>
+        <h4>Detection & Monitoring</h4>
+        <ul class="bullets">
+          <li><span class="kw">Monitor model performance</span> continuously — accuracy, F1, AUC over time</li>
+          <li><span class="kw">Feature distribution monitoring</span> — check if input feature distributions shift (mean, std dev)</li>
+          <li><span class="kw">Scheduled drift detection</span> — run statistical tests weekly/monthly</li>
+          <li><span class="kw">Shadow mode testing</span> — compare old model vs new model on live data</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Fixes</h4>
+        <ul class="bullets">
+          <li><span class="kw">Retrain with new data</span> — most common fix; periodically retrain on recent data</li>
+          <li><span class="kw">Online / incremental learning</span> — model updates continuously with new data</li>
+          <li><span class="kw">Sliding window</span> — use only recent N months of data for training</li>
+          <li><span class="kw">Weighted resampling</span> — give more weight to recent data points</li>
+          <li><span class="kw">Ensemble with new model</span> — blend old + new model during transition</li>
+          <li><span class="kw">Feature engineering update</span> — add new features that capture new patterns</li>
+        </ul>
+      </div>
+    </div>
+
+    <h4>Data Drift in the ML Lifecycle</h4>
+    <div class="code" style="margin-top:8px">
+<span class="c-indigo">Train Phase:</span>   Model learns from historical data
+       ↓
+<span class="c-green">Deploy Phase:</span>  Model performs well on similar data  ✓
+       ↓
+<span class="c-amber">Monitor Phase:</span> Track performance metrics over time
+       ↓
+<span class="c-rose">Drift Detected:</span> PSI &gt; 0.2, accuracy drops, F1 drops
+       ↓
+<span class="c-red">Alert &amp; Retrain:</span> Collect new data → retrain → redeploy
+       ↓
+<span class="c-green">Back to Deploy →</span> cycle continues
+    </div>
+
+    <div class="note note-amber" style="margin-top:12px">
+      <span class="amber">Interview tip:</span> Data drift is a key topic in <strong>MLOps</strong>. Always mention monitoring tools like <span class="kw">Evidently AI</span>, <span class="kw">WhyLogs</span>, <span class="kw">Alibi Detect</span>, or cloud-native solutions like <span class="kw">AWS SageMaker Model Monitor</span>, <span class="kw">Azure ML Data Drift</span> when discussing production ML systems.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-title">14 · Statistical Tests in EDA</div>
+
+  <div class="card">
+    <h3>Hypothesis Testing for Feature Analysis <span class="interview">interview ★</span></h3>
+    <p>Statistical tests help determine if observed differences or relationships in data are <span class="kw">statistically significant</span> or just due to chance.</p>
+
+    <table style="margin-top:10px">
+      <tr><th>Test</th><th>Input</th><th>Output</th><th>Use Case</th></tr>
+      <tr>
+        <td><span class="kw">t-test</span></td>
+        <td>Numerical</td>
+        <td>Numerical (2 groups)</td>
+        <td>Compare means of 2 groups — e.g. A/B testing</td>
+      </tr>
+      <tr>
+        <td><span class="kw">ANOVA</span></td>
+        <td>Numerical</td>
+        <td>Categorical (3+ groups)</td>
+        <td>Compare means across 3+ groups — feature vs target</td>
+      </tr>
+      <tr>
+        <td><span class="kw">Chi-Square</span></td>
+        <td>Categorical</td>
+        <td>Categorical</td>
+        <td>Relation between two categorical variables</td>
+      </tr>
+      <tr>
+        <td><span class="kw">z-test</span></td>
+        <td>Numerical</td>
+        <td>Numerical</td>
+        <td>Large sample size, known variance</td>
+      </tr>
+      <tr>
+        <td><span class="kw">KS Test</span></td>
+        <td>Any</td>
+        <td>Any</td>
+        <td>Compare two distributions — data drift detection</td>
+      </tr>
+    </table>
+
+    <h4>p-value Interpretation</h4>
+    <table>
+      <tr><th>p-value</th><th>Meaning</th><th>Action</th></tr>
+      <tr><td><span class="green">&lt; 0.05</span></td><td>Statistically significant — reject null hypothesis</td><td>Feature is important ✅</td></tr>
+      <tr><td><span class="red">&gt; 0.05</span></td><td>Not significant — fail to reject null hypothesis</td><td>Feature may be irrelevant ❌</td></tr>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-title">16 · Cross Validation <span class="new-badge">Added</span></div>
+
+  <div class="card">
+    <h3>What is Cross Validation? <span class="interview">interview ★★</span></h3>
+    <p>Cross Validation is a <span class="kw">model evaluation technique</span> that tests how well a model generalizes to unseen data. Instead of a single train/test split, it uses <span class="kw">multiple splits</span> to get a more reliable estimate of model performance and reduce overfitting risk.</p>
+
+    <div class="note note-amber">
+      <span class="amber">Why not just train/test split?</span> A single split is dependent on which data ends up in each set — lucky or unlucky split. Cross Validation averages over multiple splits to get a <strong>stable, unbiased estimate</strong>.
+    </div>
+
+    <h4>1. K-Fold Cross Validation <span class="interview">interview ★★</span></h4>
+    <p>Split data into <span class="kw">K equal folds</span>. Train on K-1 folds, test on 1 fold. Repeat K times, each fold acts as the test set once. Average the scores.</p>
+
+    <div style="text-align:center; margin:16px 0;">
+      <svg viewBox="0 0 580 130" xmlns="http://www.w3.org/2000/svg" style="max-width:580px; width:100%;">
+        <!-- Header -->
+        <text x="290" y="14" fill="var(--muted)" font-size="9" font-family="JetBrains Mono" text-anchor="middle" letter-spacing="2">K-FOLD (K=5)</text>
+        <!-- Fold 1 -->
+        <rect x="10"  y="22" width="80" height="22" rx="3" fill="rgba(232,93,58,0.3)"   stroke="rgba(232,93,58,0.6)"   stroke-width="1.2"/>
+        <rect x="92"  y="22" width="80" height="22" rx="3" fill="rgba(129,140,248,0.15)" stroke="rgba(129,140,248,0.3)" stroke-width="1"/>
+        <rect x="174" y="22" width="80" height="22" rx="3" fill="rgba(129,140,248,0.15)" stroke="rgba(129,140,248,0.3)" stroke-width="1"/>
+        <rect x="256" y="22" width="80" height="22" rx="3" fill="rgba(129,140,248,0.15)" stroke="rgba(129,140,248,0.3)" stroke-width="1"/>
+        <rect x="338" y="22" width="80" height="22" rx="3" fill="rgba(129,140,248,0.15)" stroke="rgba(129,140,248,0.3)" stroke-width="1"/>
+        <text x="50"  y="37" fill="var(--red)"    font-size="9" font-family="JetBrains Mono" text-anchor="middle">TEST</text>
+        <text x="132" y="37" fill="var(--indigo)" font-size="9" font-family="JetBrains Mono" text-anchor="middle">TRAIN</text>
+        <text x="214" y="37" fill="var(--indigo)" font-size="9" font-family="JetBrains Mono" text-anchor="middle">TRAIN</text>
+        <text x="296" y="37" fill="var(--indigo)" font-size="9" font-family="JetBrains Mono" text-anchor="middle">TRAIN</text>
+        <text x="378" y="37" fill="var(--indigo)" font-size="9" font-family="JetBrains Mono" text-anchor="middle">TRAIN</text>
+        <text x="460" y="37" fill="var(--green)"  font-size="9" font-family="JetBrains Mono">Fold 1 → score₁</text>
+        <!-- Fold 2 -->
+        <rect x="10"  y="50" width="80" height="22" rx="3" fill="rgba(129,140,248,0.15)" stroke="rgba(129,140,248,0.3)" stroke-width="1"/>
+        <rect x="92"  y="50" width="80" height="22" rx="3" fill="rgba(232,93,58,0.3)"   stroke="rgba(232,93,58,0.6)"   stroke-width="1.2"/>
+        <rect x="174" y="50" width="80" height="22" rx="3" fill="rgba(129,140,248,0.15)" stroke="rgba(129,140,248,0.3)" stroke-width="1"/>
+        <rect x="256" y="50" width="80" height="22" rx="3" fill="rgba(129,140,248,0.15)" stroke="rgba(129,140,248,0.3)" stroke-width="1"/>
+        <rect x="338" y="50" width="80" height="22" rx="3" fill="rgba(129,140,248,0.15)" stroke="rgba(129,140,248,0.3)" stroke-width="1"/>
+        <text x="50"  y="65" fill="var(--indigo)" font-size="9" font-family="JetBrains Mono" text-anchor="middle">TRAIN</text>
+        <text x="132" y="65" fill="var(--red)"    font-size="9" font-family="JetBrains Mono" text-anchor="middle">TEST</text>
+        <text x="214" y="65" fill="var(--indigo)" font-size="9" font-family="JetBrains Mono" text-anchor="middle">TRAIN</text>
+        <text x="296" y="65" fill="var(--indigo)" font-size="9" font-family="JetBrains Mono" text-anchor="middle">TRAIN</text>
+        <text x="378" y="65" fill="var(--indigo)" font-size="9" font-family="JetBrains Mono" text-anchor="middle">TRAIN</text>
+        <text x="460" y="65" fill="var(--green)"  font-size="9" font-family="JetBrains Mono">Fold 2 → score₂</text>
+        <!-- Fold 3 -->
+        <rect x="10"  y="78" width="80" height="22" rx="3" fill="rgba(129,140,248,0.15)" stroke="rgba(129,140,248,0.3)" stroke-width="1"/>
+        <rect x="92"  y="78" width="80" height="22" rx="3" fill="rgba(129,140,248,0.15)" stroke="rgba(129,140,248,0.3)" stroke-width="1"/>
+        <rect x="174" y="78" width="80" height="22" rx="3" fill="rgba(232,93,58,0.3)"   stroke="rgba(232,93,58,0.6)"   stroke-width="1.2"/>
+        <rect x="256" y="78" width="80" height="22" rx="3" fill="rgba(129,140,248,0.15)" stroke="rgba(129,140,248,0.3)" stroke-width="1"/>
+        <rect x="338" y="78" width="80" height="22" rx="3" fill="rgba(129,140,248,0.15)" stroke="rgba(129,140,248,0.3)" stroke-width="1"/>
+        <text x="50"  y="93" fill="var(--indigo)" font-size="9" font-family="JetBrains Mono" text-anchor="middle">TRAIN</text>
+        <text x="132" y="93" fill="var(--indigo)" font-size="9" font-family="JetBrains Mono" text-anchor="middle">TRAIN</text>
+        <text x="214" y="93" fill="var(--red)"    font-size="9" font-family="JetBrains Mono" text-anchor="middle">TEST</text>
+        <text x="296" y="93" fill="var(--indigo)" font-size="9" font-family="JetBrains Mono" text-anchor="middle">TRAIN</text>
+        <text x="378" y="93" fill="var(--indigo)" font-size="9" font-family="JetBrains Mono" text-anchor="middle">TRAIN</text>
+        <text x="460" y="93" fill="var(--green)"  font-size="9" font-family="JetBrains Mono">Fold 3 → score₃</text>
+        <!-- dots -->
+        <text x="184" y="115" fill="var(--muted)" font-size="10" font-family="JetBrains Mono">... (repeat K times)</text>
+        <text x="460" y="115" fill="var(--amber)"  font-size="9" font-family="JetBrains Mono">Avg = (Σscoreᵢ)/K</text>
+      </svg>
+    </div>
+
+    <div class="two-col" style="margin-top:8px">
+      <div>
+        <h4>Key Properties</h4>
+        <ul class="bullets">
+          <li>Every data point is used for <span class="kw">both training and testing</span></li>
+          <li>Final score = <span class="kw">average of all K scores</span></li>
+          <li>Typical K values: <span class="kw">5 or 10</span> (most common)</li>
+          <li>K=5 → 80% train, 20% test per fold</li>
+          <li>K=10 → 90% train, 10% test per fold</li>
+          <li>More reliable than single train/test split</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Choosing K</h4>
+        <table>
+          <tr><th>K Value</th><th>Trade-off</th><th>Use When</th></tr>
+          <tr><td><span class="green">K = 5</span></td><td>Balanced</td><td>General purpose ★</td></tr>
+          <tr><td><span class="blue">K = 10</span></td><td>More accurate, slower</td><td>Medium datasets</td></tr>
+          <tr><td><span class="amber">K = n (LOOCV)</span></td><td>Most accurate, very slow</td><td>Small datasets</td></tr>
+          <tr><td><span class="red">K = 2 or 3</span></td><td>Fast, less reliable</td><td>Large datasets</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <h4>2. Stratified K-Fold <span class="interview">interview ★</span></h4>
+    <p>Same as K-Fold, but each fold maintains the <span class="kw">same class proportion</span> as the original dataset. Essential for imbalanced data.</p>
+
+    <div class="code">
+<span class="c-muted">Original dataset:  70% Class A,  30% Class B</span>
+
+<span class="c-red">Regular K-Fold:</span>
+  Fold 1 test: 90% A, 10% B  ← class imbalance per fold ❌
+  Fold 2 test: 60% A, 40% B
+
+<span class="c-green">Stratified K-Fold:</span>
+  Fold 1 test: 70% A, 30% B  ← same ratio as original ✅
+  Fold 2 test: 70% A, 30% B  ← consistent across folds ✅
+    </div>
+
+    <div class="note note-green" style="margin-top:8px">
+      <span class="green">Always use Stratified K-Fold</span> for classification problems — especially when classes are imbalanced. sklearn: <span class="kw">StratifiedKFold(n_splits=5)</span>
+    </div>
+
+    <h4>3. LOOCV — Leave One Out Cross Validation <span class="interview">interview ★</span></h4>
+    <p>Special case of K-Fold where <span class="kw">K = n</span> (number of samples). Each iteration uses <strong>one sample as test</strong> and all remaining samples as training.</p>
+
+    <div class="two-col" style="margin-top:8px">
+      <div>
+        <ul class="bullets">
+          <li>Train on n−1 samples, test on 1</li>
+          <li>Repeat n times (once per data point)</li>
+          <li>Final score = average of n scores</li>
+          <li>Uses almost all data for training each time</li>
+          <li><span class="green">Most accurate estimate</span> possible</li>
+          <li><span class="red">Very slow</span> — n model trainings</li>
+        </ul>
+      </div>
+      <div>
+        <div class="code" style="font-size:11px;">
+<span class="c-muted">n = 100 samples</span>
+Iteration 1:  train on 99, test on sample 1
+Iteration 2:  train on 99, test on sample 2
+...
+Iteration 100: train on 99, test on sample 100
+
+<span class="c-amber">100 models trained → average = final score</span>
+        </div>
+      </div>
+    </div>
+
+    <h4>Cross Validation Methods — Comparison</h4>
+    <table style="margin-top:8px">
+      <tr><th>Method</th><th>Test size</th><th>Speed</th><th>Accuracy</th><th>Best For</th></tr>
+      <tr><td><span class="kw">K-Fold (K=5)</span></td><td>20%</td><td><span class="green">Fast</span></td><td>Good</td><td>General purpose ★</td></tr>
+      <tr><td><span class="kw">K-Fold (K=10)</span></td><td>10%</td><td>Moderate</td><td>Better</td><td>Medium datasets</td></tr>
+      <tr><td><span class="kw">Stratified K-Fold</span></td><td>20%</td><td><span class="green">Fast</span></td><td>Good</td><td>Classification + imbalanced ★</td></tr>
+      <tr><td><span class="kw">LOOCV</span></td><td>1 sample</td><td><span class="red">Very Slow</span></td><td>Best</td><td>Small datasets</td></tr>
+      <tr><td><span class="kw">Repeated K-Fold</span></td><td>20%</td><td>Slow</td><td>Very Good</td><td>Stable estimate needed</td></tr>
+    </table>
+
+    <h4>Cross Validation for Model Selection</h4>
+    <div class="note" style="margin-top:8px">
+      CV is used to: (1) <span class="kw">Evaluate</span> model performance reliably, (2) <span class="kw">Select</span> the best model among candidates, (3) <span class="kw">Tune hyperparameters</span> without overfitting to test data, (4) Detect <span class="kw">overfitting</span> — large gap between train CV score and test CV score.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-title">17 · Hyperparameter Tuning <span class="new-badge">Added</span></div>
+
+  <div class="card">
+    <h3>What is Hyperparameter Tuning? <span class="interview">interview ★★</span></h3>
+    <p>Hyperparameters are values <span class="kw">set before training</span> (not learned by the model). Tuning finds the <span class="kw">optimal combination</span> of hyperparameters that gives the best model performance.</p>
+
+    <div class="two-col" style="margin-top:12px">
+      <div>
+        <h4>Parameter vs Hyperparameter</h4>
+        <table>
+          <tr><th></th><th>Parameter</th><th>Hyperparameter</th></tr>
+          <tr><td><span class="kw">Learned by</span></td><td>Model during training</td><td>Set by you before training</td></tr>
+          <tr><td><span class="kw">Examples</span></td><td>Weights (w), bias (b)</td><td>Learning rate, n_estimators, max_depth, C, K</td></tr>
+          <tr><td><span class="kw">Updated</span></td><td>Via gradient descent</td><td>Via hyperparameter search</td></tr>
+        </table>
+      </div>
+      <div>
+        <h4>Common Hyperparameters by Algorithm</h4>
+        <div class="code" style="font-size:11px;">
+<span class="c-indigo">Linear/Logistic Reg:</span> C (regularization)
+<span class="c-indigo">Decision Tree:</span>      max_depth, min_samples_split
+<span class="c-indigo">Random Forest:</span>      n_estimators, max_features
+<span class="c-indigo">XGBoost:</span>            learning_rate, n_estimators,
+                    max_depth, subsample, gamma
+<span class="c-indigo">SVM:</span>                C, kernel, gamma
+<span class="c-indigo">KNN:</span>                K (n_neighbors), metric
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Method 1 — Grid Search CV <span class="interview">interview ★</span></h3>
+    <p>Try <span class="kw">every possible combination</span> of hyperparameter values from a predefined grid. Exhaustive but thorough.</p>
+
+    <div class="two-col" style="margin-top:12px">
+      <div>
+        <h4>How It Works</h4>
+        <ul class="bullets">
+          <li>Define a grid of hyperparameter values to try</li>
+          <li>Train and evaluate model for <span class="kw">every combination</span></li>
+          <li>Uses cross-validation to evaluate each combination</li>
+          <li>Pick combination with best CV score</li>
+        </ul>
+        <div class="code" style="margin-top:10px; font-size:11px;">
+<span class="c-muted">param_grid = {</span>
+  'max_depth': [3, 5, 7],
+  'n_estimators': [100, 200, 300],
+  'learning_rate': [0.01, 0.1]
+<span class="c-muted">}</span>
+
+<span class="c-muted">Total combinations:</span>
+3 × 3 × 2 = <span class="c-amber">18 combinations</span>
+Each with 5-fold CV → 18 × 5 = <span class="c-red">90 model fits!</span>
+        </div>
+      </div>
+      <div>
+        <h4>Pros & Cons</h4>
+        <div class="note note-green" style="margin-bottom:8px; font-size:12px">
+          <span class="green">✅ Pros:</span><br>
+          · Guaranteed to find best combination in the grid<br>
+          · Simple to understand and implement<br>
+          · Reproducible results
+        </div>
+        <div class="note note-red" style="font-size:12px">
+          <span class="red">❌ Cons:</span><br>
+          · Very slow — tries ALL combinations<br>
+          · Computationally expensive for large grids<br>
+          · Doesn't scale with many hyperparameters<br>
+          · Grid must be defined manually
+        </div>
+        <div class="note" style="margin-top:8px; font-size:12px">
+          sklearn: <span class="kw">GridSearchCV(estimator, param_grid, cv=5)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Method 2 — Random Search CV <span class="interview">interview ★</span></h3>
+    <p>Instead of trying all combinations, <span class="kw">randomly sample</span> a fixed number of hyperparameter combinations. Faster than Grid Search while often finding equally good results.</p>
+
+    <div class="two-col" style="margin-top:12px">
+      <div>
+        <h4>How It Works</h4>
+        <ul class="bullets">
+          <li>Define a distribution or range for each hyperparameter</li>
+          <li>Randomly sample <span class="kw">n_iter combinations</span></li>
+          <li>Evaluate each combination with cross-validation</li>
+          <li>Pick best combination found</li>
+        </ul>
+        <div class="code" style="margin-top:10px; font-size:11px;">
+<span class="c-muted">param_dist = {</span>
+  'max_depth': [3, 5, 7, 9, 11],
+  'n_estimators': range(50, 500),
+  'learning_rate': uniform(0.01, 0.3)
+<span class="c-muted">}</span>
+
+<span class="c-muted">RandomizedSearchCV(n_iter=20)</span>
+→ tries only <span class="c-green">20 random combos</span> (not all!)
+→ much faster, still effective ✓
+        </div>
+      </div>
+      <div>
+        <h4>Grid Search vs Random Search</h4>
+        <table>
+          <tr><th></th><th>Grid Search</th><th>Random Search</th></tr>
+          <tr><td><span class="kw">Search</span></td><td>Exhaustive</td><td>Random sample</td></tr>
+          <tr><td><span class="kw">Speed</span></td><td><span class="red">Slow</span></td><td><span class="green">Fast ★</span></td></tr>
+          <tr><td><span class="kw">Guarantee</span></td><td>Best in grid</td><td>May miss best</td></tr>
+          <tr><td><span class="kw">Large grids</span></td><td><span class="red">Impractical</span></td><td><span class="green">Scales well</span></td></tr>
+          <tr><td><span class="kw">Best for</span></td><td>Small param space</td><td>Large param space ★</td></tr>
+        </table>
+        <div class="note note-amber" style="margin-top:8px; font-size:12px">
+          <span class="amber">Research finding:</span> Random Search finds equally good hyperparameters as Grid Search in ~1/10 the time for large search spaces.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Method 3 — Bayesian Optimization <span class="interview">interview ★★</span></h3>
+    <p>Uses <span class="kw">probabilistic model</span> (surrogate function) to intelligently decide which hyperparameter combinations to try next — based on past results. Smarter than both Grid and Random Search.</p>
+
+    <div class="note note-purple" style="margin-top:10px">
+      <span class="purple">Core idea:</span> Instead of trying combinations blindly, Bayesian Optimization <strong>learns from previous trials</strong> and focuses on promising regions of the search space — like a smart student who learns from wrong answers.
+    </div>
+
+    <div class="two-col" style="margin-top:14px">
+      <div>
+        <h4>How It Works — Step by Step</h4>
+        <div class="code" style="font-size:11px;">
+<span class="c-indigo">Step 1:</span> Try a few random combinations (exploration)
+<span class="c-indigo">Step 2:</span> Build a surrogate model (e.g. Gaussian Process)
+         — models the relationship between
+           hyperparams and performance
+<span class="c-indigo">Step 3:</span> Use acquisition function to choose
+         NEXT best combination to try
+<span class="c-indigo">Step 4:</span> Evaluate that combination
+<span class="c-indigo">Step 5:</span> Update surrogate model with result
+<span class="c-indigo">Step 6:</span> Repeat Steps 3–5 until budget exhausted
+<span class="c-green">→ Converges to optimal faster than Grid/Random</span>
+        </div>
+      </div>
+      <div>
+        <h4>Pros & Cons</h4>
+        <div class="note note-green" style="margin-bottom:8px; font-size:12px">
+          <span class="green">✅ Pros:</span><br>
+          · Much more efficient than Grid/Random Search<br>
+          · Learns from previous evaluations<br>
+          · Finds good hyperparameters with fewer trials<br>
+          · Handles continuous and discrete params
+        </div>
+        <div class="note note-red" style="font-size:12px">
+          <span class="red">❌ Cons:</span><br>
+          · More complex to implement<br>
+          · Sequential — can't parallelize easily<br>
+          · Surrogate model has its own overhead
+        </div>
+        <div class="note" style="margin-top:8px; font-size:12px">
+          Libraries: <span class="kw">Optuna</span>, <span class="purple">Hyperopt</span>, <span class="blue">Scikit-Optimize (skopt)</span>, <span class="amber">BayesSearchCV</span>
+        </div>
+      </div>
+    </div>
+
+    <h4>All Three Methods — Full Comparison</h4>
+    <table style="margin-top:8px">
+      <tr><th></th><th>Grid Search</th><th>Random Search</th><th>Bayesian Optimization</th></tr>
+      <tr>
+        <td><span class="kw">Strategy</span></td>
+        <td>Try all combos</td>
+        <td>Try random combos</td>
+        <td>Learn & focus on promising regions</td>
+      </tr>
+      <tr>
+        <td><span class="kw">Speed</span></td>
+        <td><span class="red">Slowest</span></td>
+        <td><span class="amber">Fast</span></td>
+        <td><span class="green">Most efficient ★</span></td>
+      </tr>
+      <tr>
+        <td><span class="kw">Trials needed</span></td>
+        <td>All combinations</td>
+        <td>n_iter (e.g. 20–50)</td>
+        <td>Few (e.g. 10–30)</td>
+      </tr>
+      <tr>
+        <td><span class="kw">Uses past results</span></td>
+        <td>❌ No</td>
+        <td>❌ No</td>
+        <td><span class="green">✅ Yes</span></td>
+      </tr>
+      <tr>
+        <td><span class="kw">Complexity</span></td>
+        <td>Simple</td>
+        <td>Simple</td>
+        <td>Complex</td>
+      </tr>
+      <tr>
+        <td><span class="kw">Best for</span></td>
+        <td>Small search space</td>
+        <td>Large search space</td>
+        <td>Expensive models, large space ★</td>
+      </tr>
+      <tr>
+        <td><span class="kw">sklearn</span></td>
+        <td>GridSearchCV</td>
+        <td>RandomizedSearchCV</td>
+        <td>Optuna / skopt</td>
+      </tr>
+    </table>
+
+    <h4>When to Use Which?</h4>
+    <div class="code" style="margin-top:8px">
+<span class="c-muted">Small param grid (≤ 20 combos)?</span>
+  → <span class="c-green">Grid Search</span> — exhaustive, guaranteed best in grid
+
+<span class="c-muted">Large param grid (100s of combos)?</span>
+  → <span class="c-amber">Random Search</span> — fast, good enough
+
+<span class="c-muted">Expensive model (deep learning, XGBoost) + limited budget?</span>
+  → <span class="c-purple">Bayesian Optimization (Optuna)</span> — most efficient
+
+<span class="c-muted">Production / competition ML?</span>
+  → <span class="c-purple">Bayesian Optimization</span> + cross-validation
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-title">18 · Quick Revision Cheatsheet</div>
+
+  <div class="card">
+    <div class="two-col">
+      <div>
+        <h4>EDA Steps</h4>
+        <ul class="bullets">
+          <li><span class="kw">Profile</span> — rows, cols, types, missing, duplicates</li>
+          <li><span class="kw">Statistical</span> — mean, median, std, variance, tests</li>
+          <li><span class="kw">Graph</span> — histogram, boxplot, scatter, heatmap, KDE</li>
+        </ul>
+
+        <h4 style="margin-top:14px">Missing Values</h4>
+        <ul class="bullets">
+          <li><span class="kw">MCAR</span> — random, use CCA or imputation</li>
+          <li><span class="kw">MAR</span> — depends on other vars, use imputation</li>
+          <li><span class="kw">NMAR</span> — depends on itself, domain knowledge needed</li>
+          <li>Numerical: mean (normal) / median (skewed) / KNN</li>
+          <li>Categorical: mode / "Missing" category</li>
+        </ul>
+
+        <h4 style="margin-top:14px">Scaling</h4>
+        <ul class="bullets">
+          <li><span class="kw">Standardization</span> — mean=0, std=1, (−∞, +∞)</li>
+          <li><span class="kw">Normalization</span> — range [0,1], CNN inputs</li>
+          <li>Tree-based algos: <span class="green">no scaling needed</span></li>
+          <li>Distance-based algos: <span class="red">always scale</span></li>
+        </ul>
+
+        <h4 style="margin-top:14px">Encoding</h4>
+        <ul class="bullets">
+          <li><span class="kw">Label</span> — ordinal data (order matters)</li>
+          <li><span class="kw">One-Hot</span> — nominal, few categories</li>
+          <li><span class="kw">Binary</span> — nominal, many categories</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Feature Selection Methods</h4>
+        <ul class="bullets">
+          <li><span class="blue">Filter</span> — Variance, Correlation, ANOVA, Chi-Square, MI</li>
+          <li><span class="amber">Wrapper</span> — Forward, Backward, Exhaustive, RFE</li>
+          <li><span class="green">Embedded</span> — Lasso (L1), Ridge (L2), Tree importance</li>
+        </ul>
+
+        <h4 style="margin-top:14px">Imbalanced Data</h4>
+        <ul class="bullets">
+          <li><span class="red">Undersampling</span> — remove majority class samples</li>
+          <li><span class="green">Oversampling</span> — duplicate minority samples</li>
+          <li><span class="purple">SMOTE</span> — synthetic interpolated samples</li>
+          <li>Use F1, AUC — not accuracy</li>
+        </ul>
+
+        <h4 style="margin-top:14px">PCA vs LDA</h4>
+        <ul class="bullets">
+          <li><span class="kw">PCA</span> — unsupervised, max variance, no labels</li>
+          <li><span class="purple">LDA</span> — supervised, max class separation, uses labels</li>
+          <li>Keep PCs until cumulative variance ≥ 90%</li>
+        </ul>
+
+        <h4 style="margin-top:14px">Data Drift <span class="new-badge">New</span></h4>
+        <ul class="bullets">
+          <li><span class="red">Covariate Shift</span> — P(X) changes, input features shift</li>
+          <li><span class="amber">Concept Drift</span> — P(Y|X) changes, relationship changes</li>
+          <li><span class="purple">Prior Shift</span> — P(Y) changes, class proportions shift</li>
+          <li>Detect: <span class="kw">PSI, KS Test, Chi-Square, Jensen-Shannon</span></li>
+          <li>PSI &lt;0.1 ✅ | 0.1–0.2 ⚠️ | &gt;0.2 ❌ retrain</li>
+          <li>Fix: Retrain, sliding window, online learning</li>
+          <li>Tools: Evidently AI, WhyLogs, Alibi Detect</li>
+        </ul>
+
+        <h4 style="margin-top:14px">Cross Validation <span class="new-badge">New</span></h4>
+        <ul class="bullets">
+          <li><span class="kw">K-Fold</span> — split into K folds, rotate test fold, avg scores</li>
+          <li><span class="green">Stratified K-Fold</span> — maintains class ratio per fold ★</li>
+          <li><span class="amber">LOOCV</span> — K=n, one sample test, most accurate but slow</li>
+          <li>K=5 or 10 is standard</li>
+          <li>Use Stratified for classification + imbalanced data</li>
+          <li>Use LOOCV for small datasets</li>
+        </ul>
+
+        <h4 style="margin-top:14px">Hyperparameter Tuning <span class="new-badge">New</span></h4>
+        <ul class="bullets">
+          <li><span class="kw">Grid Search</span> — all combos, slow, guaranteed best in grid</li>
+          <li><span class="amber">Random Search</span> — random combos, fast, large grids</li>
+          <li><span class="purple">Bayesian Optimization</span> — learns from past, most efficient</li>
+          <li>Small grid → Grid Search | Large grid → Random / Bayesian</li>
+          <li>Expensive model → Optuna (Bayesian) ★</li>
+          <li>Always use CV inside tuning to avoid overfitting</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center; margin-top:48px; color: var(--muted); font-family: var(--mono); font-size:11px; letter-spacing:1px;">
+    ML NOTES · EDA · FEATURE ENGINEERING · CROSS VALIDATION · HYPERPARAMETER TUNING · KEEP LEARNING 🔥
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-name">Aakash Patil</div>
+  <div class="footer-links">
+    <a href="https://www.linkedin.com/in/aakashpatil5050/" target="_blank">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      LinkedIn — Aakash Patil
+    </a>
+    <a href="https://github.com/patilaakash619" target="_blank">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+      GitHub — patilaakash619
+    </a>
+    <a href="https://www.kaggle.com/patilaakash619" target="_blank">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.825 23.859c-.022.092-.117.141-.281.141h-3.139c-.187 0-.351-.082-.492-.248l-5.178-6.589-1.448 1.374v5.111c0 .235-.117.352-.351.352H5.505c-.236 0-.354-.117-.354-.352V.353c0-.233.118-.353.354-.353h2.431c.234 0 .351.12.351.353v14.343l6.203-6.272c.165-.165.33-.246.495-.246h3.239c.144 0 .236.06.285.18.046.149.034.255-.036.315l-6.555 6.344 6.836 8.507c.095.104.117.208.07.334"/></svg>
+      Kaggle — Aakash Patil
+    </a>
+  </div>
+  <div class="footer-copy">ML NOTES · EDA & FEATURE ENGINEERING · CROSS VALIDATION · HYPERPARAMETER TUNING · © Aakash Patil</div>
+</div>
+
+</body>
+</html>
