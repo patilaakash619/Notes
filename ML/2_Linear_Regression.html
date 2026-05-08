@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML Notes — Linear Regression</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0e0c;
+    --paper: #1a1814;
+    --card: #201e1a;
+    --border: #2e2b25;
+    --red: #e85d3a;
+    --red-soft: #c94a2a;
+    --amber: #f0a500;
+    --green: #4caf7d;
+    --blue: #5b9bd5;
+    --text: #e8e4dc;
+    --muted: #8a8278;
+    --white: #f5f1e8;
+    --mono: 'JetBrains Mono', monospace;
+    --serif: 'Instrument Serif', serif;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 0;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--paper);
+    border-bottom: 2px solid var(--red);
+    padding: 32px 48px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-left h1 {
+    font-family: var(--serif);
+    font-size: 28px;
+    color: var(--white);
+    letter-spacing: -0.5px;
+  }
+  .header-left p {
+    color: var(--muted);
+    font-size: 12px;
+    font-family: var(--mono);
+    margin-top: 2px;
+  }
+  .badge {
+    background: var(--red);
+    color: white;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* LAYOUT */
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 32px 80px;
+  }
+
+  /* SECTION TITLES */
+  .section-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--red);
+    margin: 48px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* CARD */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 24px 28px;
+    margin-bottom: 16px;
+  }
+  .card h3 {
+    font-family: var(--serif);
+    font-size: 18px;
+    color: var(--white);
+    margin-bottom: 12px;
+  }
+  .card h4 {
+    color: var(--amber);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin: 16px 0 8px;
+  }
+
+  /* RED KEYWORD */
+  .kw { color: var(--red); font-weight: 600; }
+  .amber { color: var(--amber); }
+  .green { color: var(--green); }
+  .blue { color: var(--blue); }
+  .muted { color: var(--muted); }
+
+  /* FORMULA BOX */
+  .formula {
+    background: #13110e;
+    border: 1px solid var(--amber);
+    border-left: 3px solid var(--amber);
+    border-radius: 4px;
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--amber);
+    margin: 12px 0;
+  }
+
+  /* TABLE */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 13px;
+  }
+  th {
+    background: #13110e;
+    color: var(--red);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+  }
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* BULLET */
+  .bullets { list-style: none; }
+  .bullets li {
+    padding: 4px 0 4px 18px;
+    position: relative;
+    color: var(--text);
+  }
+  .bullets li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--red);
+    font-size: 10px;
+    top: 6px;
+  }
+
+  /* TWO COL */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* CODE BLOCK */
+  .code {
+    background: #0a0908;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: #b8b0a0;
+    line-height: 1.8;
+    overflow-x: auto;
+    margin: 10px 0;
+  }
+  .code .c-red { color: var(--red); }
+  .code .c-green { color: var(--green); }
+  .code .c-amber { color: var(--amber); }
+  .code .c-blue { color: var(--blue); }
+  .code .c-muted { color: var(--muted); }
+
+  /* NOTE BOX */
+  .note {
+    background: rgba(232,93,58,0.08);
+    border: 1px solid rgba(232,93,58,0.25);
+    border-radius: 4px;
+    padding: 12px 16px;
+    font-size: 13px;
+    margin: 10px 0;
+  }
+  .note-green {
+    background: rgba(76,175,125,0.08);
+    border-color: rgba(76,175,125,0.25);
+  }
+  .note-blue {
+    background: rgba(91,155,213,0.08);
+    border-color: rgba(91,155,213,0.25);
+  }
+
+  /* TAG */
+  .tag {
+    display: inline-block;
+    background: rgba(232,93,58,0.15);
+    color: var(--red);
+    border: 1px solid rgba(232,93,58,0.3);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    margin-right: 4px;
+    letter-spacing: 0.5px;
+  }
+  .tag-green {
+    background: rgba(76,175,125,0.15);
+    color: var(--green);
+    border-color: rgba(76,175,125,0.3);
+  }
+  .tag-amber {
+    background: rgba(240,165,0,0.15);
+    color: var(--amber);
+    border-color: rgba(240,165,0,0.3);
+  }
+
+  /* DIVIDER */
+  hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+  /* INTERVIEW PILL */
+  .interview {
+    display: inline-block;
+    background: rgba(240,165,0,0.12);
+    color: var(--amber);
+    border: 1px solid rgba(240,165,0,0.3);
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    vertical-align: middle;
+    margin-left: 8px;
+  }
+
+  /* PRINT */
+  /* WATERMARK */
+  .watermark {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-35deg);
+    font-family: var(--serif);
+    font-size: 72px;
+    color: rgba(232, 93, 58, 0.045);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 0;
+    letter-spacing: 4px;
+    user-select: none;
+  }
+
+  /* FOOTER */
+  .footer {
+    background: var(--paper);
+    border-top: 2px solid var(--red);
+    padding: 28px 48px;
+    margin-top: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .footer-name {
+    font-family: var(--serif);
+    font-size: 18px;
+    color: var(--white);
+    letter-spacing: 1px;
+  }
+  .footer-links {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .footer-links a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    text-decoration: none;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+  .footer-links a:hover { color: var(--white); border-color: var(--red); background: rgba(232,93,58,0.08); }
+  .footer-links a svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .footer-copy { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 1px; }
+
+  @media print {
+    .header { position: static; }
+    .watermark { color: rgba(0,0,0,0.06); }
+    body { background: white; color: black; }
+    .card { background: #f9f9f9; border-color: #ddd; break-inside: avoid; }
+    .formula { background: #fff8e0; border-color: #e0a000; color: #7a5000; }
+    .code { background: #f0f0f0; color: #333; }
+    .kw { color: #c0392b; }
+    .amber { color: #d68000; }
+    .green { color: #2e7d52; }
+    .footer { background: #f5f5f5; border-top: 2px solid #c0392b; }
+    .footer-links a { border-color: #ccc; color: #333; }
+  }
+
+  @media (max-width: 640px) {
+    .two-col { grid-template-columns: 1fr; }
+    .header { padding: 20px 20px 16px; }
+    .container { padding: 24px 16px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="watermark">Aakash Patil</div>
+
+<div class="header">
+  <div class="header-left">
+    <h1>Machine Learning Notes</h1>
+    <p>// Linear Regression · Loss Functions · Gradient Descent · Evaluation</p>
+  </div>
+  <span class="badge">Digital Notes</span>
+</div>
+
+<div class="container">
+
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section-title">01 · Machine Learning Basics</div>
+
+  <div class="card">
+    <h3>What is Machine Learning?</h3>
+    <p>Subfield of AI that focuses on developing algorithms and models that enable computers to <span class="kw">learn from data</span> and improve performance without being explicitly programmed.</p>
+    <div class="note note-blue" style="margin-top:12px">
+      Core idea → machines automatically learn <span class="blue">patterns</span>, make <span class="blue">predictions</span>, and take <span class="blue">decisions</span> based on input data.
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <h3><span class="kw">1.</span> Supervised Learning</h3>
+      <p>Learning from <span class="kw">labeled data</span> (data with answers)</p>
+      <ul class="bullets" style="margin-top:10px">
+        <li>Model trained where output is already known</li>
+        <li>Learns: Input → Correct Output</li>
+      </ul>
+      <h4>Examples</h4>
+      <ul class="bullets">
+        <li><span class="kw">Classification</span> — predicting labels/categories</li>
+        <li><span class="kw">Regression</span> — predicting numbers (continuous)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="kw">2.</span> Unsupervised Learning</h3>
+      <p>Finding patterns in <span class="kw">unlabeled data</span> — learning without answers</p>
+      <ul class="bullets" style="margin-top:10px">
+        <li><span class="kw">Clustering</span> — grouping similar data points</li>
+        <li><span class="kw">Dimensionality Reduction</span> — reducing features, retaining info</li>
+        <li><span class="kw">Association</span> — discovering rules among variables</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3><span class="kw">3.</span> Reinforcement Learning</h3>
+    <p>An agent learns by interacting with environment, improving actions based on <span class="green">rewards</span> and <span class="red kw">penalties</span>.</p>
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px">
+      <span class="tag">Agent (Model)</span>
+      <span class="tag">Environment</span>
+      <span class="tag">Action</span>
+      <span class="tag-green tag">Rewards / Penalties</span>
+      <span class="tag">State</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section-title">02 · Basic ML Terms</div>
+
+  <div class="card">
+    <table>
+      <tr><th>Term</th><th>Meaning</th><th>Example</th></tr>
+      <tr><td><span class="kw">Features</span></td><td>Input variables given to model</td><td>age, salary, hours studied</td></tr>
+      <tr><td><span class="kw">Label</span></td><td>Output / answer model predicts</td><td>house price, marks</td></tr>
+      <tr><td><span class="kw">Training Data</span></td><td>Data used to train model</td><td>contains features + labels</td></tr>
+      <tr><td><span class="kw">Testing Data</span></td><td>Data to check model performance</td><td>model hasn't seen it before</td></tr>
+      <tr><td><span class="kw">Parameter</span></td><td>Values learned during training</td><td>m, b in linear regression</td></tr>
+      <tr><td><span class="kw">Hyperparameter</span></td><td>Values set by you before training</td><td>learning rate, epochs</td></tr>
+      <tr><td><span class="kw">Evaluation</span></td><td>Checking how good model is</td><td>accuracy, RMSE, R²</td></tr>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section-title">03 · ML Workflow</div>
+
+  <div class="card">
+    <div class="code">
+<span class="c-red">Problem</span> → <span class="c-amber">Data Collection</span> → <span class="c-amber">Clean</span> → <span class="c-amber">Features</span> → <span class="c-green">Train/Test</span> → <span class="c-green">Improve</span> → <span class="c-blue">Deploy</span> → <span class="c-blue">Monitor</span>
+    </div>
+    <table style="margin-top:12px">
+      <tr><th>#</th><th>Step</th><th>What happens</th></tr>
+      <tr><td class="muted">1</td><td><span class="kw">Problem Understanding</span></td><td>Define: regression or classification?</td></tr>
+      <tr><td class="muted">2</td><td><span class="kw">Data Collection</span></td><td>SQL, API, Excel, Web scraping</td></tr>
+      <tr><td class="muted">3</td><td><span class="kw">EDA</span></td><td>Profile, statistical & graph-based analysis</td></tr>
+      <tr><td class="muted">4</td><td><span class="kw">Data Cleaning</span></td><td>Handle missing values, outliers</td></tr>
+      <tr><td class="muted">5</td><td><span class="kw">Feature Engineering</span></td><td>Create new features, scaling, encoding</td></tr>
+      <tr><td class="muted">6</td><td><span class="kw">Train-Test Split</span></td><td>70–80% train / 20–30% test</td></tr>
+      <tr><td class="muted">7</td><td><span class="kw">Model Selection</span></td><td>Choose algorithm based on problem</td></tr>
+      <tr><td class="muted">8</td><td><span class="kw">Model Training</span></td><td>Model learns, parameters get updated</td></tr>
+      <tr><td class="muted">9</td><td><span class="kw">Model Evaluation</span></td><td>MAE, MSE, RMSE, R² / Accuracy, F1</td></tr>
+      <tr><td class="muted">10</td><td><span class="kw">Hyperparameter Tuning</span></td><td>Grid Search, Random Search</td></tr>
+      <tr><td class="muted">11</td><td><span class="kw">Model Validation</span></td><td>Cross Validation</td></tr>
+      <tr><td class="muted">12</td><td><span class="kw">Deployment</span></td><td>Flask, FastAPI, AWS, Azure</td></tr>
+      <tr><td class="muted">13</td><td><span class="kw">Monitoring</span></td><td>Monitor performance, handle data drift</td></tr>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section-title">04 · Linear Regression</div>
+
+  <div class="card">
+    <h3>Simple Linear Regression</h3>
+    <p>Foundation technique for predicting a <span class="kw">continuous target</span> variable based on one or more input features.</p>
+    <div class="formula">y = β₀ + β₁x</div>
+    <table>
+      <tr><th>Symbol</th><th>Meaning</th></tr>
+      <tr><td><span class="kw">y</span></td><td>Dependent variable (target) — what you're predicting</td></tr>
+      <tr><td><span class="kw">x</span></td><td>Independent variable (feature) — your input</td></tr>
+      <tr><td><span class="kw">β₁</span></td><td>Slope — how much y changes when x increases by 1</td></tr>
+      <tr><td><span class="kw">β₀</span></td><td>Intercept — value of y when x = 0</td></tr>
+    </table>
+    <div class="note note-green" style="margin-top:12px">
+      <span class="green">Example:</span> Score = 40 + 5 × (Hours Studied) → studying 6 hrs → score = <strong>70</strong>
+    </div>
+
+    <h4>Best Fit Line — OLS</h4>
+    <p>Algorithm minimizes <span class="kw">Sum of Squared Residuals</span> — called Ordinary Least Squares (OLS)</p>
+    <ul class="bullets" style="margin-top:8px">
+      <li>Residual = (actual y) − (predicted y)</li>
+      <li>Squaring ensures −ve & +ve errors don't cancel</li>
+      <li>Larger errors are penalized more</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Multiple Linear Regression</h3>
+    <div class="formula">y = β₀ + β₁x₁ + β₂x₂ + β₃x₃ + ...</div>
+    <div class="note note-blue">
+      Same idea — just more variables. Example: predicting house price using size (x₁), bedrooms (x₂), distance from city (x₃)
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section-title">05 · Loss & Cost Functions</div>
+
+  <div class="card">
+    <table>
+      <tr><th>Term</th><th>Applies to</th><th>Meaning</th></tr>
+      <tr><td><span class="kw">Loss Function</span></td><td>1 data point</td><td>How wrong is prediction for a single example</td></tr>
+      <tr><td><span class="kw">Cost Function</span></td><td>Entire dataset</td><td>Average of all losses across all data points</td></tr>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <h3><span class="kw">1. MSE</span> — Mean Squared Error</h3>
+      <div class="formula">(1/n) × Σ(actual − predicted)²</div>
+      <h4>Behaviour</h4>
+      <ul class="bullets">
+        <li>Squares error → big mistakes punished heavily</li>
+        <li>Smooth curve → easy for Gradient Descent</li>
+        <li>Sensitive to outliers</li>
+      </ul>
+      <h4>Use When</h4>
+      <ul class="bullets">
+        <li>Want to penalize large errors heavily</li>
+        <li>Data has few/no outliers</li>
+        <li>Default choice for regression</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="kw">2. MAE</span> — Mean Absolute Error</h3>
+      <div class="formula">(1/n) × Σ|actual − predicted|</div>
+      <h4>Behaviour</h4>
+      <ul class="bullets">
+        <li>Treats all errors equally (no squaring)</li>
+        <li>Robust to outliers</li>
+        <li>Not smooth at zero → slightly harder to optimize</li>
+      </ul>
+      <h4>Use When</h4>
+      <ul class="bullets">
+        <li>Data has outliers you don't want to over-penalize</li>
+        <li>Want equal treatment of all errors</li>
+        <li>Median-based prediction is acceptable</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3><span class="kw">3. Huber Loss</span> — Best of Both</h3>
+    <div class="two-col" style="margin-top:10px">
+      <div>
+        <h4>Small error (&lt; δ)</h4>
+        <p>Acts like <span class="green">MSE</span> — smooth, penalizes moderately</p>
+      </div>
+      <div>
+        <h4>Large error (&gt; δ)</h4>
+        <p>Acts like <span class="blue">MAE</span> — robust, doesn't over-punish</p>
+      </div>
+    </div>
+    <div class="note" style="margin-top:10px">
+      <span class="kw">Use when:</span> Real-world messy data with some outliers — smooth optimization AND outlier robustness
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section-title">06 · Gradient Descent</div>
+
+  <div class="card">
+    <h3>What is Gradient Descent?</h3>
+    <p>The <span class="kw">algorithm that minimizes the cost function</span>. It's the engine that drives learning.</p>
+    <h4>Steps</h4>
+    <div class="code">
+<span class="c-muted">Step 1:</span> Start with <span class="c-amber">random weights</span>
+<span class="c-muted">Step 2:</span> Calculate <span class="c-red">cost</span> (how wrong is model?)
+<span class="c-muted">Step 3:</span> Calculate <span class="c-red">gradient</span> (which direction is downhill?)
+<span class="c-muted">Step 4:</span> Update weights → move downhill
+<span class="c-muted">Step 5:</span> Repeat until cost is minimum ✓
+    </div>
+    <h4>Update Formula</h4>
+    <div class="formula">w = w − α × (∂Cost/∂w)</div>
+    <table style="margin-top:8px">
+      <tr><th>Symbol</th><th>Meaning</th></tr>
+      <tr><td><span class="kw">w</span></td><td>Model weight (coefficient)</td></tr>
+      <tr><td><span class="kw">α</span></td><td>Learning rate (step size)</td></tr>
+      <tr><td><span class="kw">∂Cost/∂w</span></td><td>Gradient (direction to move)</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Types of Gradient Descent</h3>
+    <table>
+      <tr><th>Type</th><th>Data per step</th><th>Speed</th><th>Use when</th></tr>
+      <tr><td><span class="kw">Batch GD</span></td><td>All data</td><td>🐢 Slow</td><td>Small dataset</td></tr>
+      <tr><td><span class="kw">SGD</span></td><td>1 sample</td><td>⚡ Fast</td><td>Very large datasets</td></tr>
+      <tr><td><span class="kw">Mini-Batch GD</span> <span class="tag-green tag">★ Default</span></td><td>32–128 samples</td><td>✅ Balanced</td><td>Almost always</td></tr>
+    </table>
+    <h4>Learning Rate</h4>
+    <table>
+      <tr><th>α value</th><th>Problem</th></tr>
+      <tr><td><span class="kw">Too large</span></td><td>Overshoots minimum — never converges</td></tr>
+      <tr><td><span class="kw">Too small</span></td><td>Takes forever to train</td></tr>
+      <tr><td><span class="green">Just right</span></td><td>Reaches minimum efficiently ✅</td></tr>
+    </table>
+    <h4>Adam Optimizer <span class="interview">interview ★</span></h4>
+    <div class="note note-green">
+      <span class="green">Adam</span> = Momentum + Adaptive Learning Rate. Automatically adjusts learning rate per parameter. <strong>Default choice for deep learning</strong> — faster and more reliable than basic GD.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section-title">07 · Overfitting & Underfitting</div>
+
+  <div class="card">
+    <table>
+      <tr><th>Problem</th><th>Train Error</th><th>Test Error</th><th>Cause</th></tr>
+      <tr><td><span class="kw">Underfitting</span></td><td>High</td><td>High</td><td>Model too simple</td></tr>
+      <tr><td><span class="green">Good Fit ✅</span></td><td>Low</td><td>Low</td><td>Just right</td></tr>
+      <tr><td><span class="amber">Overfitting</span></td><td>Very Low</td><td>High</td><td>Model too complex</td></tr>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <h3><span class="kw">Fix Underfitting</span></h3>
+      <ul class="bullets">
+        <li>Add more features</li>
+        <li>Add polynomial features (for curves)</li>
+        <li>Reduce regularization (lower λ)</li>
+        <li>Use more complex model</li>
+        <li>Train longer (Neural Nets)</li>
+        <li>Clean noisy data</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="amber">Fix Overfitting</span></h3>
+      <ul class="bullets">
+        <li>Get more training data</li>
+        <li>Remove useless features</li>
+        <li>Regularization — Lasso / Ridge</li>
+        <li>Cross-validation (K-Fold)</li>
+        <li>Simpler model</li>
+        <li>Early stopping (Neural Nets)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section-title">08 · Regularization (for Overfitting)</div>
+
+  <div class="card">
+    <div class="note" style="margin-bottom:14px">
+      ⚠️ <span class="kw">Regularization is ONLY for Overfitting.</span> Never use for underfitting — it makes it worse.
+    </div>
+    <div class="two-col">
+      <div>
+        <h4>L1 — Lasso</h4>
+        <p>Penalty = sum of |coefficients|</p>
+        <ul class="bullets" style="margin-top:8px">
+          <li>Pushes some coefficients to <span class="kw">exactly zero</span></li>
+          <li>Removes useless features automatically</li>
+          <li><strong>Use when:</strong> many features, most likely useless</li>
+        </ul>
+      </div>
+      <div>
+        <h4>L2 — Ridge</h4>
+        <p>Penalty = sum of coefficients²</p>
+        <ul class="bullets" style="margin-top:8px">
+          <li>Shrinks all coefficients but <span class="blue">none reach zero</span></li>
+          <li>Keeps all features, just smaller</li>
+          <li><strong>Use when:</strong> all features genuinely matter</li>
+        </ul>
+      </div>
+    </div>
+    <h4>ElasticNet = L1 + L2 <span class="tag-amber tag">Best of both</span></h4>
+    <p>Use when unsure, or features are correlated, or large dataset.</p>
+    <h4>Lambda (λ) — Strength Dial</h4>
+    <div class="code">
+<span class="c-muted">λ = 0</span>   No penalty → original model
+<span class="c-muted">λ small</span>  Mild shrink
+<span class="c-green">λ right</span>  Good for overfitting ✓
+<span class="c-red">λ large</span>  Over-simplified → underfit!
+    </div>
+    <p class="muted" style="font-size:12px; margin-top:6px">Find best λ using Cross-Validation.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section-title">09 · Evaluation Metrics</div>
+
+  <div class="card">
+    <table>
+      <tr><th>Metric</th><th>Formula</th><th>Outlier Sensitive</th><th>Best For</th></tr>
+      <tr><td><span class="kw">MAE</span></td><td>avg|actual − pred|</td><td>❌ No</td><td>Simple, equal error treatment</td></tr>
+      <tr><td><span class="kw">MSE</span></td><td>avg(actual − pred)²</td><td>✅ Yes</td><td>Penalize large errors heavily</td></tr>
+      <tr><td><span class="kw">RMSE</span></td><td>√MSE</td><td>✅ Yes</td><td>General reporting (same unit as y)</td></tr>
+      <tr><td><span class="kw">R²</span></td><td>1 − SS_res/SS_tot</td><td>❌ No</td><td>Overall model fit</td></tr>
+      <tr><td><span class="kw">Adjusted R²</span></td><td>Penalized R²</td><td>❌ No</td><td>Comparing models with diff. features</td></tr>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section-title">10 · R² vs Adjusted R²</div>
+
+  <div class="two-col">
+    <div class="card">
+      <h3><span class="kw">R²</span></h3>
+      <p>"What % of the output does my model explain?"</p>
+      <div class="formula">R² = 1 − SS_res / SS_tot</div>
+      <table style="margin-top:8px">
+        <tr><th>Value</th><th>Meaning</th></tr>
+        <tr><td><span class="green">1.0</span></td><td>Perfect model</td></tr>
+        <tr><td><span class="green">0.85</span></td><td>Good</td></tr>
+        <tr><td class="muted">0.5</td><td>Mediocre</td></tr>
+        <tr><td><span class="kw">0.0</span></td><td>Useless</td></tr>
+        <tr><td><span class="kw">Negative</span></td><td>Worse than average</td></tr>
+      </table>
+      <div class="note" style="margin-top:10px">
+        ⚠️ <span class="kw">Problem:</span> Always increases when you add features — even useless ones!
+      </div>
+    </div>
+    <div class="card">
+      <h3><span class="kw">Adjusted R²</span></h3>
+      <p>Same as R², but <span class="green">penalizes useless features</span></p>
+      <div class="formula">1 − [(1−R²)(n−1) / (n−k−1)]</div>
+      <table style="margin-top:8px">
+        <tr><th>Action</th><th>Result</th></tr>
+        <tr><td>Add useful feature</td><td><span class="green">Goes up ↑</span></td></tr>
+        <tr><td>Add useless feature</td><td><span class="kw">Goes down ↓</span></td></tr>
+      </table>
+      <h4>When to Use Which</h4>
+      <ul class="bullets">
+        <li>Same number of features → <span class="blue">R²</span></li>
+        <li>Different number of features → <span class="green">Adjusted R²</span></li>
+        <li>Adding/removing features → <span class="green">Adjusted R²</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section-title">11 · Linear Regression Assumptions</div>
+
+  <div class="card">
+    <table>
+      <tr><th>#</th><th>Assumption</th><th>Simple Meaning</th><th>Check</th></tr>
+      <tr>
+        <td class="muted">1</td>
+        <td><span class="kw">Linear Relationship</span></td>
+        <td>X and Y must have a straight-line relationship</td>
+        <td>Scatter plot</td>
+      </tr>
+      <tr>
+        <td class="muted">2</td>
+        <td>
+          <span class="kw">No Multicollinearity</span>
+          <span class="interview">interview ★</span>
+        </td>
+        <td>
+          Input features should not be highly correlated with each other.
+          <div class="note" style="margin-top:8px; font-size:12px">
+            <span class="amber">VIF (Variance Inflation Factor)</span> — measures how much one feature is explained by other features.<br>
+            <strong>VIF &lt; 5</strong> ✅ Acceptable &nbsp;|&nbsp; <strong>VIF &gt; 10</strong> ❌ High multicollinearity — remove that feature
+          </div>
+        </td>
+        <td>Correlation matrix, VIF score</td>
+      </tr>
+      <tr>
+        <td class="muted">3</td>
+        <td><span class="kw">Homoscedasticity</span></td>
+        <td>Errors should be equally spread at all values of X (no fan shape)</td>
+        <td>Residual plot</td>
+      </tr>
+      <tr>
+        <td class="muted">4</td>
+        <td><span class="kw">Normal Distribution of Errors</span></td>
+        <td>Residuals should follow a bell curve</td>
+        <td>Histogram of residuals</td>
+      </tr>
+      <tr>
+        <td class="muted">5</td>
+        <td><span class="kw">No Autocorrelation</span></td>
+        <td>Each data point's error should be independent of others (common in time-series)</td>
+        <td>Durbin-Watson test ≈ 2 ✅</td>
+      </tr>
+    </table>
+    <div class="note" style="margin-top:12px">
+      If any assumption is <span class="kw">violated</span> → model predictions become <span class="kw">unreliable</span>. Always check assumptions <strong>before</strong> trusting your model.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section-title">12 · Quick Revision Cheatsheet</div>
+
+  <div class="card">
+    <div class="two-col">
+      <div>
+        <h4>Regression Metrics</h4>
+        <ul class="bullets">
+          <li><span class="kw">MAE</span> — avg absolute error, robust</li>
+          <li><span class="kw">MSE</span> — penalizes large errors</li>
+          <li><span class="kw">RMSE</span> — √MSE, same unit as y</li>
+          <li><span class="kw">R²</span> — % variation explained</li>
+          <li><span class="kw">Adj R²</span> — honest R² for multi-features</li>
+        </ul>
+        <h4 style="margin-top:14px">Loss Functions</h4>
+        <ul class="bullets">
+          <li><span class="kw">MSE</span> — clean data, penalize big errors</li>
+          <li><span class="kw">MAE</span> — noisy data, equal treatment</li>
+          <li><span class="kw">Huber</span> — mix of both, real-world</li>
+          <li><span class="kw">Binary Cross-Entropy</span> — 2-class problems</li>
+          <li><span class="kw">Categorical CE</span> — multi-class problems</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Regularization</h4>
+        <ul class="bullets">
+          <li><span class="kw">L1 Lasso</span> — kills useless features (→ 0)</li>
+          <li><span class="kw">L2 Ridge</span> — shrinks all features</li>
+          <li><span class="kw">ElasticNet</span> — L1 + L2 combined</li>
+          <li>Only for <span class="kw">Overfitting</span> ❌ not underfitting</li>
+        </ul>
+        <h4 style="margin-top:14px">Gradient Descent</h4>
+        <ul class="bullets">
+          <li><span class="kw">Batch</span> — all data, slow</li>
+          <li><span class="kw">SGD</span> — 1 sample, fast, noisy</li>
+          <li><span class="kw">Mini-Batch</span> — balanced ★ default</li>
+          <li><span class="green">Adam</span> — Momentum + Adaptive LR, best for DL</li>
+          <li>VIF &lt; 5 ✅ &nbsp;|&nbsp; VIF &gt; 10 ❌ multicollinearity</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center; margin-top:48px; color: var(--muted); font-family: var(--mono); font-size:11px; letter-spacing:1px;">
+    ML NOTES · DIGITAL VERSION · KEEP LEARNING 🔥
+  </div>
+
+</div>
+
+<div class="footer">
+  <div class="footer-name">Aakash Patil</div>
+  <div class="footer-links">
+    <a href="https://www.linkedin.com/in/aakashpatil5050/" target="_blank">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      LinkedIn — Aakash Patil
+    </a>
+    <a href="https://github.com/patilaakash619" target="_blank">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+      GitHub — patilaakash619
+    </a>
+    <a href="https://www.kaggle.com/patilaakash619" target="_blank">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.825 23.859c-.022.092-.117.141-.281.141h-3.139c-.187 0-.351-.082-.492-.248l-5.178-6.589-1.448 1.374v5.111c0 .235-.117.352-.351.352H5.505c-.236 0-.354-.117-.354-.352V.353c0-.233.118-.353.354-.353h2.431c.234 0 .351.12.351.353v14.343l6.203-6.272c.165-.165.33-.246.495-.246h3.239c.144 0 .236.06.285.18.046.149.034.255-.036.315l-6.555 6.344 6.836 8.507c.095.104.117.208.07.334"/></svg>
+      Kaggle — Aakash Patil
+    </a>
+  </div>
+  <div class="footer-copy">ML NOTES · LINEAR REGRESSION · © Aakash Patil</div>
+</div>
+
+</body>
+</html>
