@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logistic Regression Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0e0c;
+    --paper: #1a1814;
+    --card: #201e1a;
+    --border: #2e2b25;
+    --red: #e85d3a;
+    --amber: #f0a500;
+    --green: #4caf7d;
+    --blue: #5b9bd5;
+    --purple: #a78bfa;
+    --text: #e8e4dc;
+    --muted: #8a8278;
+    --white: #f5f1e8;
+    --mono: 'JetBrains Mono', monospace;
+    --serif: 'Instrument Serif', serif;
+    --sans: 'DM Sans', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.7; }
+
+  .header {
+    background: var(--paper);
+    border-bottom: 2px solid var(--blue);
+    padding: 32px 48px 24px;
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .header-left h1 { font-family: var(--serif); font-size: 28px; color: var(--white); letter-spacing: -0.5px; }
+  .header-left p { color: var(--muted); font-size: 12px; font-family: var(--mono); margin-top: 2px; }
+  .badge { background: var(--blue); color: white; font-family: var(--mono); font-size: 10px; padding: 4px 10px; border-radius: 2px; letter-spacing: 1px; text-transform: uppercase; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 40px 32px 80px; }
+
+  .section-title {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--blue); margin: 48px 0 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 24px 28px; margin-bottom: 16px; }
+  .card h3 { font-family: var(--serif); font-size: 18px; color: var(--white); margin-bottom: 12px; }
+  .card h4 { color: var(--amber); font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin: 16px 0 8px; }
+
+  .kw { color: var(--red); font-weight: 600; }
+  .amber { color: var(--amber); }
+  .green { color: var(--green); }
+  .blue { color: var(--blue); }
+  .purple { color: var(--purple); }
+  .muted { color: var(--muted); }
+
+  .formula { background: #13110e; border: 1px solid var(--amber); border-left: 3px solid var(--amber); border-radius: 4px; padding: 12px 16px; font-family: var(--mono); font-size: 13px; color: var(--amber); margin: 12px 0; }
+
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th { background: #13110e; color: var(--blue); font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 10px 14px; text-align: left; border-bottom: 2px solid var(--border); }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .bullets { list-style: none; }
+  .bullets li { padding: 4px 0 4px 18px; position: relative; color: var(--text); }
+  .bullets li::before { content: '▸'; position: absolute; left: 0; color: var(--blue); font-size: 10px; top: 6px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  .code { background: #0a0908; border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; font-family: var(--mono); font-size: 12px; color: #b8b0a0; line-height: 1.8; overflow-x: auto; margin: 10px 0; }
+  .code .c-red { color: var(--red); }
+  .code .c-green { color: var(--green); }
+  .code .c-amber { color: var(--amber); }
+  .code .c-blue { color: var(--blue); }
+  .code .c-purple { color: var(--purple); }
+  .code .c-muted { color: var(--muted); }
+
+  .note { background: rgba(91,155,213,0.08); border: 1px solid rgba(91,155,213,0.25); border-radius: 4px; padding: 12px 16px; font-size: 13px; margin: 10px 0; }
+  .note-red { background: rgba(232,93,58,0.08); border-color: rgba(232,93,58,0.25); }
+  .note-green { background: rgba(76,175,125,0.08); border-color: rgba(76,175,125,0.25); }
+  .note-amber { background: rgba(240,165,0,0.08); border-color: rgba(240,165,0,0.25); }
+  .note-purple { background: rgba(167,139,250,0.08); border-color: rgba(167,139,250,0.25); }
+
+  .tag { display: inline-block; background: rgba(91,155,213,0.15); color: var(--blue); border: 1px solid rgba(91,155,213,0.3); font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 2px; margin-right: 4px; letter-spacing: 0.5px; }
+  .tag-green { background: rgba(76,175,125,0.15); color: var(--green); border-color: rgba(76,175,125,0.3); }
+  .tag-amber { background: rgba(240,165,0,0.15); color: var(--amber); border-color: rgba(240,165,0,0.3); }
+  .tag-red { background: rgba(232,93,58,0.15); color: var(--red); border-color: rgba(232,93,58,0.3); }
+  .tag-purple { background: rgba(167,139,250,0.15); color: var(--purple); border-color: rgba(167,139,250,0.3); }
+
+  .interview { display: inline-block; background: rgba(240,165,0,0.12); color: var(--amber); border: 1px solid rgba(240,165,0,0.3); font-family: var(--mono); font-size: 9px; padding: 2px 7px; border-radius: 10px; letter-spacing: 1px; text-transform: uppercase; vertical-align: middle; margin-left: 8px; }
+
+  /* Sigmoid curve visual */
+  .sigmoid-wrap { text-align: center; margin: 16px 0; }
+
+  /* confusion matrix */
+  .cm-grid { display: grid; grid-template-columns: auto 1fr 1fr; gap: 2px; max-width: 380px; margin: 12px auto; font-family: var(--mono); font-size: 12px; }
+  .cm-cell { padding: 10px 14px; border-radius: 3px; text-align: center; }
+  .cm-header { background: transparent; color: var(--muted); font-size: 10px; display: flex; align-items: center; justify-content: center; }
+  .cm-tp { background: rgba(76,175,125,0.2); border: 1px solid rgba(76,175,125,0.4); color: var(--green); }
+  .cm-tn { background: rgba(76,175,125,0.2); border: 1px solid rgba(76,175,125,0.4); color: var(--green); }
+  .cm-fp { background: rgba(232,93,58,0.15); border: 1px solid rgba(232,93,58,0.35); color: var(--red); }
+  .cm-fn { background: rgba(232,93,58,0.15); border: 1px solid rgba(232,93,58,0.35); color: var(--red); }
+
+  @media (max-width: 640px) {
+    .two-col, .three-col { grid-template-columns: 1fr; }
+    .header { padding: 20px 20px 16px; }
+    .container { padding: 24px 16px 60px; }
+  }
+  /* WATERMARK */
+  .watermark {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-35deg);
+    font-family: var(--serif);
+    font-size: 72px;
+    color: rgba(91, 155, 213, 0.045);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 0;
+    letter-spacing: 4px;
+    user-select: none;
+  }
+
+  /* FOOTER */
+  .footer {
+    background: var(--paper);
+    border-top: 2px solid var(--blue);
+    padding: 28px 48px;
+    margin-top: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .footer-name {
+    font-family: var(--serif);
+    font-size: 18px;
+    color: var(--white);
+    letter-spacing: 1px;
+  }
+  .footer-links {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .footer-links a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    text-decoration: none;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+  .footer-links a:hover { color: var(--white); border-color: var(--blue); background: rgba(91,155,213,0.08); }
+  .footer-links a svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .footer-copy { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 1px; }
+
+  @media print {
+    .header { position: static; }
+    .watermark { color: rgba(0,0,0,0.06); }
+    body { background: white; color: black; }
+    .card { background: #f9f9f9; border-color: #ddd; break-inside: avoid; }
+    .formula { background: #fff8e0; border-color: #e0a000; color: #7a5000; }
+    .code { background: #f0f0f0; color: #333; }
+    .footer { background: #f5f5f5; border-top: 2px solid #1a6ea8; }
+    .footer-links a { border-color: #ccc; color: #333; }
+  }
+</style>
+</head>
+<body>
+
+<div class="watermark">Aakash Patil</div>
+
+<div class="header">
+  <div class="header-left">
+    <h1>Logistic Regression Notes</h1>
+    <p>// What · Sigmoid · Types · Loss · Evaluation · Metrics · Assumptions</p>
+  </div>
+  <span class="badge">Digital Notes</span>
+</div>
+
+<div class="container">
+
+  <!-- 01 WHAT IS LOGISTIC REGRESSION -->
+  <div class="section-title">01 · What is Logistic Regression?</div>
+
+  <div class="card">
+    <h3>Definition</h3>
+    <p>A <span class="kw">classification algorithm</span> used to predict the probability of a categorical outcome (class). Despite the name "regression", it is used for <span class="blue">classification — not regression.</span></p>
+    <div class="note note-amber" style="margin-top:12px">
+      <span class="amber">Key idea:</span> Instead of predicting a number like Linear Regression, Logistic Regression predicts a <strong>probability between 0 and 1</strong>, then converts it into a class label.
+    </div>
+
+    <div class="two-col" style="margin-top:16px">
+      <div>
+        <h4>Linear Regression vs Logistic Regression</h4>
+        <table>
+          <tr><th></th><th>Linear</th><th>Logistic</th></tr>
+          <tr><td>Output</td><td>Any number</td><td><span class="green">0 to 1 (prob)</span></td></tr>
+          <tr><td>Task</td><td>Regression</td><td><span class="blue">Classification</span></td></tr>
+          <tr><td>Line</td><td>Straight line</td><td><span class="blue">S-shaped curve</span></td></tr>
+          <tr><td>Loss</td><td>MSE</td><td><span class="blue">Cross-Entropy</span></td></tr>
+        </table>
+      </div>
+      <div>
+        <h4>Real World Examples</h4>
+        <ul class="bullets">
+          <li>Email → <span class="kw">Spam</span> or Not Spam</li>
+          <li>Tumor → <span class="kw">Malignant</span> or Benign</li>
+          <li>Loan → <span class="kw">Approved</span> or Rejected</li>
+          <li>Student → <span class="kw">Pass</span> or Fail</li>
+          <li>Transaction → <span class="kw">Fraud</span> or Legit</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 02 SIGMOID FUNCTION -->
+  <div class="section-title">02 · Sigmoid Function</div>
+
+  <div class="card">
+    <h3>The Core Function <span class="interview">interview ★</span></h3>
+    <p>Logistic Regression uses the <span class="kw">Sigmoid function</span> to squash any value into a probability between 0 and 1.</p>
+    <div class="formula">σ(z) = 1 / (1 + e⁻ᶻ)&nbsp;&nbsp;&nbsp;&nbsp;where z = β₀ + β₁x₁ + β₂x₂ + ...</div>
+
+    <div class="sigmoid-wrap">
+      <svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg" style="max-width:480px; width:100%;">
+        <!-- axes -->
+        <line x1="40" y1="170" x2="460" y2="170" stroke="#2e2b25" stroke-width="1.5"/>
+        <line x1="250" y1="10" x2="250" y2="180" stroke="#2e2b25" stroke-width="1.5"/>
+        <!-- y labels -->
+        <text x="28" y="174" fill="#8a8278" font-size="10" font-family="JetBrains Mono" text-anchor="middle">0</text>
+        <text x="28" y="94" fill="#8a8278" font-size="10" font-family="JetBrains Mono" text-anchor="middle">0.5</text>
+        <text x="28" y="18" fill="#8a8278" font-size="10" font-family="JetBrains Mono" text-anchor="middle">1</text>
+        <!-- dashed 0.5 line -->
+        <line x1="40" y1="90" x2="460" y2="90" stroke="#2e2b25" stroke-dasharray="4,4" stroke-width="1"/>
+        <!-- sigmoid curve -->
+        <path d="M 40,168 C 80,167 120,165 160,155 C 190,147 210,130 230,110 C 245,95 255,75 270,60 C 290,40 310,27 340,19 C 380,13 420,12 460,12"
+              fill="none" stroke="#5b9bd5" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- threshold dot -->
+        <circle cx="250" cy="90" r="5" fill="#f0a500"/>
+        <text x="262" y="87" fill="#f0a500" font-size="10" font-family="JetBrains Mono">threshold (0.5)</text>
+        <!-- labels -->
+        <text x="80" y="145" fill="#e85d3a" font-size="11" font-family="JetBrains Mono">Predict 0</text>
+        <text x="350" y="35" fill="#4caf7d" font-size="11" font-family="JetBrains Mono">Predict 1</text>
+        <text x="455" y="168" fill="#8a8278" font-size="10" font-family="JetBrains Mono">z</text>
+      </svg>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <h4>How it works</h4>
+        <ul class="bullets">
+          <li>Input z = any real number (−∞ to +∞)</li>
+          <li>Output σ(z) = always between <span class="green">0 and 1</span></li>
+          <li>z → +∞ means σ → <span class="green">1</span></li>
+          <li>z → −∞ means σ → <span class="kw">0</span></li>
+          <li>z = 0 means σ = <span class="amber">0.5</span> (decision boundary)</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Decision Rule</h4>
+        <div class="code">
+<span class="c-muted">if</span> σ(z) <span class="c-green">≥ 0.5</span> → <span class="c-green">Predict Class 1</span>
+<span class="c-muted">if</span> σ(z) <span class="c-red">&lt; 0.5</span>  → <span class="c-red">Predict Class 0</span>
+        </div>
+        <div class="note note-amber" style="margin-top:8px">
+          The threshold (0.5) can be changed depending on the problem. E.g. for cancer detection, lower it to 0.3 to catch more cases.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 EQUATION -->
+  <div class="section-title">03 · Logistic Regression Equation</div>
+
+  <div class="card">
+    <h3>The Math</h3>
+    <div class="formula">z = β₀ + β₁x₁ + β₂x₂ + ... + βₙxₙ</div>
+    <div class="formula">P(y=1) = σ(z) = 1 / (1 + e⁻ᶻ)</div>
+
+    <table style="margin-top:12px">
+      <tr><th>Symbol</th><th>Meaning</th></tr>
+      <tr><td><span class="kw">z</span></td><td>Linear combination of inputs (same as linear regression)</td></tr>
+      <tr><td><span class="kw">β₀</span></td><td>Intercept (bias)</td></tr>
+      <tr><td><span class="kw">β₁...βₙ</span></td><td>Coefficients (weights) learned during training</td></tr>
+      <tr><td><span class="kw">P(y=1)</span></td><td>Probability that the output is class 1</td></tr>
+      <tr><td><span class="kw">e</span></td><td>Euler's number ≈ 2.718</td></tr>
+    </table>
+
+    <h4>Log Odds (Logit) <span class="interview">interview ★</span></h4>
+    <p>Logistic Regression actually models the <span class="kw">log of odds</span>, not probability directly.</p>
+    <div class="formula">log(P / 1−P) = β₀ + β₁x₁ + ...</div>
+    <ul class="bullets" style="margin-top:8px">
+      <li>Odds = P(event) / P(no event)</li>
+      <li>Log odds = logit transformation → makes output linear</li>
+      <li>This is why it's called <span class="blue">Logistic</span> Regression</li>
+    </ul>
+  </div>
+
+  <!-- 04 TYPES -->
+  <div class="section-title">04 · Types of Logistic Regression</div>
+
+  <div class="three-col">
+    <div class="card">
+      <h3><span class="blue">Binary</span></h3>
+      <span class="tag">2 Classes</span>
+      <p style="margin-top:10px">Output has exactly <span class="blue">2 classes</span></p>
+      <ul class="bullets" style="margin-top:8px">
+        <li>Spam / Not Spam</li>
+        <li>Yes / No</li>
+        <li>0 / 1</li>
+      </ul>
+      <div class="note" style="margin-top:10px; font-size:12px">
+        Uses <span class="blue">Sigmoid</span> function
+      </div>
+    </div>
+    <div class="card">
+      <h3><span class="amber">Multinomial</span></h3>
+      <span class="tag-amber tag">3+ Classes</span>
+      <p style="margin-top:10px">Output has <span class="amber">3 or more classes</span> (no order)</p>
+      <ul class="bullets" style="margin-top:8px">
+        <li>Cat / Dog / Bird</li>
+        <li>Red / Blue / Green</li>
+        <li>News: Sports / Tech / Politics</li>
+      </ul>
+      <div class="note note-amber" style="margin-top:10px; font-size:12px">
+        Uses <span class="amber">Softmax</span> function
+      </div>
+    </div>
+    <div class="card">
+      <h3><span class="purple">Ordinal</span></h3>
+      <span class="tag-purple tag">Ordered Classes</span>
+      <p style="margin-top:10px">Output has <span class="purple">ordered categories</span></p>
+      <ul class="bullets" style="margin-top:8px">
+        <li>Low / Medium / High</li>
+        <li>Poor / Good / Excellent</li>
+        <li>1★ / 2★ / 3★ / 4★ / 5★</li>
+      </ul>
+      <div class="note note-purple" style="margin-top:10px; font-size:12px">
+        Order matters between classes
+      </div>
+    </div>
+  </div>
+
+  <!-- 05 LOSS FUNCTION -->
+  <div class="section-title">05 · Loss Function — Binary Cross-Entropy</div>
+
+  <div class="card">
+    <h3>Log Loss / Binary Cross-Entropy <span class="interview">interview ★</span></h3>
+    <p>Logistic Regression does NOT use MSE. It uses <span class="kw">Binary Cross-Entropy</span> as its loss function.</p>
+    <div class="formula">Loss = −[y·log(p) + (1−y)·log(1−p)]</div>
+
+    <table style="margin-top:12px">
+      <tr><th>Symbol</th><th>Meaning</th></tr>
+      <tr><td><span class="kw">y</span></td><td>Actual label (0 or 1)</td></tr>
+      <tr><td><span class="kw">p</span></td><td>Predicted probability (0 to 1)</td></tr>
+      <tr><td><span class="kw">log</span></td><td>Natural logarithm</td></tr>
+    </table>
+
+    <h4>Why NOT MSE?</h4>
+    <div class="note note-red" style="margin-top:8px">
+      MSE with sigmoid produces a <span class="kw">non-convex</span> loss curve (many local minima) — Gradient Descent struggles. Cross-Entropy gives a <span class="green">convex curve</span> — single minimum, easy to optimize.
+    </div>
+
+    <h4>How it penalizes</h4>
+    <div class="code">
+<span class="c-muted">Actual = 1 (Spam)</span>
+  Predicted = 0.9  → <span class="c-green">small loss</span>   ✓ confident and correct
+  Predicted = 0.5  → <span class="c-amber">medium loss</span>  ~ uncertain
+  Predicted = 0.1  → <span class="c-red">HUGE loss</span>    ✗ confident and WRONG ← heavily punished
+
+<span class="c-muted">Actual = 0 (Not Spam)</span>
+  Predicted = 0.1  → <span class="c-green">small loss</span>   ✓
+  Predicted = 0.9  → <span class="c-red">HUGE loss</span>    ✗ confident wrong prediction
+    </div>
+
+    <h4>Cost Function (average over all samples)</h4>
+    <div class="formula">J(β) = −(1/n) × Σ [yᵢ·log(pᵢ) + (1−yᵢ)·log(1−pᵢ)]</div>
+  </div>
+
+  <!-- 06 DECISION BOUNDARY -->
+  <div class="section-title">06 · Decision Boundary</div>
+
+  <div class="card">
+    <h3>What is it? <span class="interview">interview ★</span></h3>
+    <p>The line (or surface) that <span class="kw">separates classes</span>. Points on one side = Class 0, other side = Class 1.</p>
+    <div class="two-col" style="margin-top:14px">
+      <div>
+        <h4>Linear Decision Boundary</h4>
+        <div class="code">
+<span class="c-blue">●  ●  ●</span>    <span class="c-red">■  ■  ■</span>
+<span class="c-blue">●  ●  ●</span>  |  <span class="c-red">■  ■  ■</span>
+<span class="c-blue">●  ●  ●</span>    <span class="c-red">■  ■  ■</span>
+          ↑
+    decision boundary
+        </div>
+        <p style="font-size:12px; color:var(--muted); margin-top:6px">When data is linearly separable</p>
+      </div>
+      <div>
+        <h4>Non-Linear Boundary</h4>
+        <div class="code">
+<span class="c-blue">● ●   ● ●</span>
+<span class="c-blue">●</span>  <span class="c-red">■ ■ ■</span>  <span class="c-blue">●</span>
+<span class="c-blue">●</span>  <span class="c-red">■ ■ ■</span>  <span class="c-blue">●</span>
+<span class="c-blue">● ●   ● ●</span>
+        </div>
+        <p style="font-size:12px; color:var(--muted); margin-top:6px">Add polynomial features for curves</p>
+      </div>
+    </div>
+    <div class="note note-amber" style="margin-top:10px">
+      Decision boundary is where <span class="amber">z = 0</span>, which means σ(z) = 0.5 exactly.
+    </div>
+  </div>
+
+  <!-- 07 EVALUATION METRICS -->
+  <div class="section-title">07 · Evaluation Metrics for Classification</div>
+
+  <div class="card">
+    <h3>Confusion Matrix <span class="interview">interview ★</span></h3>
+    <p>A table that shows what the model predicted vs what was actually correct.</p>
+
+    <div class="cm-grid" style="margin: 16px auto;">
+      <div class="cm-cell cm-header"></div>
+      <div class="cm-cell cm-header">Predicted: <span class="green">Positive</span></div>
+      <div class="cm-cell cm-header">Predicted: <span class="kw">Negative</span></div>
+      <div class="cm-cell cm-header" style="color:var(--text); font-size:11px; writing-mode:horizontal-tb">Actual: <span class="green">Pos</span></div>
+      <div class="cm-cell cm-tp"><strong>TP</strong><br><span style="font-size:10px">True Positive</span></div>
+      <div class="cm-cell cm-fn"><strong>FN</strong><br><span style="font-size:10px">False Negative</span></div>
+      <div class="cm-cell cm-header" style="color:var(--text); font-size:11px">Actual: <span class="kw">Neg</span></div>
+      <div class="cm-cell cm-fp"><strong>FP</strong><br><span style="font-size:10px">False Positive</span></div>
+      <div class="cm-cell cm-tn"><strong>TN</strong><br><span style="font-size:10px">True Negative</span></div>
+    </div>
+
+    <table style="margin-top:8px">
+      <tr><th>Term</th><th>Meaning</th><th>Example (Disease Detection)</th></tr>
+      <tr><td><span class="green">TP — True Positive</span></td><td>Predicted Yes, Actually Yes</td><td>Has disease, predicted disease ✅</td></tr>
+      <tr><td><span class="green">TN — True Negative</span></td><td>Predicted No, Actually No</td><td>No disease, predicted no disease ✅</td></tr>
+      <tr><td><span class="kw">FP — False Positive</span></td><td>Predicted Yes, Actually No</td><td>No disease, predicted disease ❌ (Type I error)</td></tr>
+      <tr><td><span class="kw">FN — False Negative</span></td><td>Predicted No, Actually Yes</td><td>Has disease, predicted no disease ❌ (Type II error)</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>The 4 Key Metrics <span class="interview">interview ★</span></h3>
+    <div class="two-col">
+      <div>
+        <h4>Accuracy</h4>
+        <div class="formula">(TP + TN) / (TP + TN + FP + FN)</div>
+        <p>% of total correct predictions</p>
+        <div class="note note-red" style="margin-top:8px; font-size:12px">
+          ⚠️ Misleading on imbalanced data. 99% accuracy on 1% fraud dataset means nothing if it predicts everything as "not fraud".
+        </div>
+      </div>
+      <div>
+        <h4>Precision <span class="interview">interview ★</span></h4>
+        <div class="formula">TP / (TP + FP)</div>
+        <p>Of all predicted positives, how many were actually positive?</p>
+        <div class="note note-amber" style="margin-top:8px; font-size:12px">
+          <span class="amber">Use when:</span> FP is costly — e.g. spam filter (don't mark legit emails as spam)
+        </div>
+      </div>
+    </div>
+    <div class="two-col" style="margin-top:16px">
+      <div>
+        <h4>Recall (Sensitivity) <span class="interview">interview ★</span></h4>
+        <div class="formula">TP / (TP + FN)</div>
+        <p>Of all actual positives, how many did we catch?</p>
+        <div class="note note-red" style="margin-top:8px; font-size:12px">
+          <span class="kw">Use when:</span> FN is costly — e.g. cancer detection (don't miss sick patients!)
+        </div>
+      </div>
+      <div>
+        <h4>F1 Score <span class="interview">interview ★</span></h4>
+        <div class="formula">2 × (Precision × Recall) / (Precision + Recall)</div>
+        <p>Harmonic mean of Precision and Recall</p>
+        <div class="note note-green" style="margin-top:8px; font-size:12px">
+          <span class="green">Use when:</span> You need balance between Precision and Recall — best for imbalanced datasets
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Precision vs Recall Tradeoff <span class="interview">interview ★</span></h3>
+    <div class="note note-amber">
+      You <span class="kw">cannot maximize both</span> at the same time. Increasing one usually decreases the other.
+    </div>
+    <div class="two-col" style="margin-top:14px">
+      <div>
+        <h4>High Precision needed</h4>
+        <ul class="bullets">
+          <li>Spam detection (don't block good emails)</li>
+          <li>Legal document classification</li>
+          <li>Product recommendations</li>
+        </ul>
+        <p style="font-size:12px; color:var(--muted); margin-top:8px">→ Raise threshold (e.g. 0.7)</p>
+      </div>
+      <div>
+        <h4>High Recall needed</h4>
+        <ul class="bullets">
+          <li>Cancer / disease detection</li>
+          <li>Fraud detection</li>
+          <li>Defect detection in manufacturing</li>
+        </ul>
+        <p style="font-size:12px; color:var(--muted); margin-top:8px">→ Lower threshold (e.g. 0.3)</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 08 ROC AUC -->
+  <div class="section-title">08 · ROC Curve & AUC Score</div>
+
+  <div class="card">
+    <h3>ROC — Receiver Operating Characteristic <span class="interview">interview ★</span></h3>
+    <p>A graph showing model performance at <span class="kw">all possible thresholds</span>.</p>
+
+    <div class="two-col" style="margin-top:14px">
+      <div>
+        <h4>Axes</h4>
+        <ul class="bullets">
+          <li><span class="blue">X-axis</span> = FPR (False Positive Rate) = FP / (FP + TN)</li>
+          <li><span class="green">Y-axis</span> = TPR (True Positive Rate = Recall) = TP / (TP + FN)</li>
+        </ul>
+        <h4>AUC — Area Under Curve</h4>
+        <table>
+          <tr><th>AUC</th><th>Meaning</th></tr>
+          <tr><td><span class="green">1.0</span></td><td>Perfect model ✅</td></tr>
+          <tr><td><span class="green">0.9+</span></td><td>Excellent</td></tr>
+          <tr><td><span class="amber">0.7–0.9</span></td><td>Good</td></tr>
+          <tr><td><span class="muted">0.5</span></td><td>Random guessing ❌</td></tr>
+          <tr><td><span class="kw">&lt; 0.5</span></td><td>Worse than random</td></tr>
+        </table>
+      </div>
+      <div>
+        <svg viewBox="0 0 220 200" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:220px">
+          <!-- axes -->
+          <line x1="30" y1="170" x2="200" y2="170" stroke="#2e2b25" stroke-width="1.5"/>
+          <line x1="30" y1="10" x2="30" y2="170" stroke="#2e2b25" stroke-width="1.5"/>
+          <!-- random line -->
+          <line x1="30" y1="170" x2="200" y2="10" stroke="#2e2b25" stroke-dasharray="5,4" stroke-width="1.5"/>
+          <!-- good model curve -->
+          <path d="M 30,170 C 30,100 60,20 100,15 C 140,10 180,10 200,10" fill="none" stroke="#4caf7d" stroke-width="2.5"/>
+          <!-- fill area -->
+          <path d="M 30,170 C 30,100 60,20 100,15 C 140,10 180,10 200,10 L 200,170 Z" fill="rgba(76,175,125,0.08)"/>
+          <!-- labels -->
+          <text x="110" y="185" fill="#8a8278" font-size="9" font-family="JetBrains Mono" text-anchor="middle">FPR →</text>
+          <text x="10" y="90" fill="#8a8278" font-size="9" font-family="JetBrains Mono" text-anchor="middle" transform="rotate(-90,10,90)">TPR ↑</text>
+          <text x="115" y="60" fill="#4caf7d" font-size="9" font-family="JetBrains Mono">AUC area</text>
+          <text x="140" y="120" fill="#2e2b25" font-size="9" font-family="JetBrains Mono" fill="#8a8278">random</text>
+        </svg>
+        <div class="note" style="font-size:12px; margin-top:8px">
+          Higher the AUC → better the model at distinguishing classes
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 09 MULTICLASS -->
+  <div class="section-title">09 · Multi-class Classification</div>
+
+  <div class="card">
+    <h3>Handling More Than 2 Classes</h3>
+    <div class="two-col">
+      <div>
+        <h4>One vs Rest (OvR)</h4>
+        <ul class="bullets">
+          <li>Train one model per class</li>
+          <li>Cat vs (Dog+Bird), Dog vs (Cat+Bird)...</li>
+          <li>Pick class with highest probability</li>
+        </ul>
+        <div class="note" style="margin-top:8px; font-size:12px">Simple, works well in practice</div>
+      </div>
+      <div>
+        <h4>Softmax Function</h4>
+        <div class="formula" style="font-size:11px">P(class k) = eᶻᵏ / Σ eᶻʲ</div>
+        <ul class="bullets" style="margin-top:8px">
+          <li>Outputs probabilities for all classes</li>
+          <li>All probabilities sum to 1</li>
+          <li>Used with Categorical Cross-Entropy</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note note-amber" style="margin-top:12px">
+      <span class="amber">Softmax example:</span> [Cat: 0.70, Dog: 0.20, Bird: 0.10] → All sum to 1 → Predict <span class="amber">Cat</span>
+    </div>
+  </div>
+
+  <!-- 10 REGULARIZATION -->
+  <div class="section-title">10 · Regularization in Logistic Regression</div>
+
+  <div class="card">
+    <p>Same as Linear Regression — add penalty to prevent overfitting.</p>
+    <div class="two-col" style="margin-top:14px">
+      <div>
+        <h4>L1 — Lasso <span class="tag-red tag">sparse</span></h4>
+        <ul class="bullets">
+          <li>Pushes some weights to exactly <span class="kw">zero</span></li>
+          <li>Automatic feature selection</li>
+          <li>Use when many features are irrelevant</li>
+        </ul>
+      </div>
+      <div>
+        <h4>L2 — Ridge <span class="tag tag">smooth</span></h4>
+        <ul class="bullets">
+          <li>Shrinks all weights but <span class="blue">none to zero</span></li>
+          <li>Handles correlated features well</li>
+          <li>Use when all features matter</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note note-amber" style="margin-top:12px; font-size:13px">
+      In sklearn, the regularization parameter is <span class="amber">C = 1/λ</span>. So <strong>smaller C = stronger regularization</strong> (opposite of λ).
+    </div>
+    <div class="note note-red" style="margin-top:8px; font-size:13px">
+      ⚠️ Regularization is <span class="kw">only for overfitting</span>. Never use for underfitting.
+    </div>
+  </div>
+
+  <!-- 11 ASSUMPTIONS -->
+  <div class="section-title">11 · Logistic Regression Assumptions</div>
+
+  <div class="card">
+    <table>
+      <tr><th>#</th><th>Assumption</th><th>Meaning</th><th>Check</th></tr>
+      <tr>
+        <td class="muted">1</td>
+        <td><span class="kw">Binary / Categorical Output</span></td>
+        <td>Output must be categorical (not continuous)</td>
+        <td>Check target variable type</td>
+      </tr>
+      <tr>
+        <td class="muted">2</td>
+        <td><span class="kw">No Multicollinearity</span> <span class="interview">VIF ★</span></td>
+        <td>Input features should not be highly correlated. <span class="amber">VIF &lt; 5</span> ✅ / <span class="kw">VIF &gt; 10</span> ❌</td>
+        <td>Correlation matrix, VIF</td>
+      </tr>
+      <tr>
+        <td class="muted">3</td>
+        <td><span class="kw">Linearity of Log Odds</span></td>
+        <td>Features should be linearly related to the <span class="blue">log odds</span> (not the probability itself)</td>
+        <td>Box-Tidwell test</td>
+      </tr>
+      <tr>
+        <td class="muted">4</td>
+        <td><span class="kw">No Outliers</span></td>
+        <td>Extreme values can heavily influence the decision boundary</td>
+        <td>Box plots, z-score</td>
+      </tr>
+      <tr>
+        <td class="muted">5</td>
+        <td><span class="kw">Large Sample Size</span></td>
+        <td>Needs sufficient data per class (~50+ samples per feature) for reliable estimates</td>
+        <td>Count samples per class</td>
+      </tr>
+      <tr>
+        <td class="muted">6</td>
+        <td><span class="kw">Independence of Observations</span></td>
+        <td>Each data point should be independent — no repeated measures or time-series patterns</td>
+        <td>Domain knowledge</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 12 LINEAR VS LOGISTIC -->
+  <div class="section-title">12 · Linear vs Logistic Regression — Full Comparison</div>
+
+  <div class="card">
+    <table>
+      <tr><th></th><th>Linear Regression</th><th>Logistic Regression</th></tr>
+      <tr><td><span class="kw">Task</span></td><td>Regression (predict number)</td><td>Classification (predict class)</td></tr>
+      <tr><td><span class="kw">Output</span></td><td>Any real number</td><td>Probability 0 to 1 → class</td></tr>
+      <tr><td><span class="kw">Function</span></td><td>y = β₀ + β₁x (straight line)</td><td>σ(z) = 1/(1+e⁻ᶻ) (S-curve)</td></tr>
+      <tr><td><span class="kw">Loss Function</span></td><td>MSE / MAE</td><td>Binary Cross-Entropy</td></tr>
+      <tr><td><span class="kw">Output range</span></td><td>−∞ to +∞</td><td>0 to 1</td></tr>
+      <tr><td><span class="kw">Decision</span></td><td>Predict value</td><td>Threshold → class label</td></tr>
+      <tr><td><span class="kw">Evaluation</span></td><td>MAE, MSE, RMSE, R²</td><td>Accuracy, Precision, Recall, F1, AUC</td></tr>
+      <tr><td><span class="kw">Example</span></td><td>Predict house price</td><td>Predict spam or not</td></tr>
+    </table>
+  </div>
+
+  <!-- 13 CHEATSHEET -->
+  <div class="section-title">13 · Quick Revision Cheatsheet</div>
+
+  <div class="card">
+    <div class="two-col">
+      <div>
+        <h4>Core Concepts</h4>
+        <ul class="bullets">
+          <li><span class="kw">Logistic Regression</span> = classification, not regression</li>
+          <li><span class="kw">Sigmoid</span> = squashes output to 0–1</li>
+          <li><span class="kw">Threshold = 0.5</span> by default (adjustable)</li>
+          <li><span class="kw">Log Loss</span> = loss function (Binary Cross-Entropy)</li>
+          <li><span class="kw">Decision Boundary</span> = where z = 0, σ = 0.5</li>
+          <li><span class="kw">Softmax</span> = multi-class version of sigmoid</li>
+        </ul>
+        <h4 style="margin-top:14px">Types</h4>
+        <ul class="bullets">
+          <li><span class="blue">Binary</span> — 2 classes → Sigmoid</li>
+          <li><span class="amber">Multinomial</span> — 3+ classes → Softmax</li>
+          <li><span class="purple">Ordinal</span> — ordered classes</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Evaluation Metrics</h4>
+        <ul class="bullets">
+          <li><span class="kw">Accuracy</span> — overall correct / total</li>
+          <li><span class="kw">Precision</span> — correct positives / predicted positives</li>
+          <li><span class="kw">Recall</span> — correct positives / actual positives</li>
+          <li><span class="kw">F1</span> — balance of Precision + Recall</li>
+          <li><span class="kw">AUC-ROC</span> — area under ROC curve (1 = perfect)</li>
+        </ul>
+        <h4 style="margin-top:14px">When to use what</h4>
+        <ul class="bullets">
+          <li>FP costly → maximize <span class="blue">Precision</span> → raise threshold</li>
+          <li>FN costly → maximize <span class="kw">Recall</span> → lower threshold</li>
+          <li>Imbalanced data → use <span class="green">F1 or AUC</span>, not Accuracy</li>
+          <li>VIF &lt; 5 ✅ &nbsp;|&nbsp; VIF &gt; 10 ❌ multicollinearity</li>
+          <li><span class="kw">C in sklearn</span> = 1/λ → smaller C = more regularization</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center; margin-top:48px; color: var(--muted); font-family: var(--mono); font-size:11px; letter-spacing:1px;">
+    ML NOTES · LOGISTIC REGRESSION · KEEP LEARNING 🔥
+  </div>
+
+</div>
+
+<div class="footer">
+  <div class="footer-name">Aakash Patil</div>
+  <div class="footer-links">
+    <a href="https://www.linkedin.com/in/aakashpatil5050/" target="_blank">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      LinkedIn — Aakash Patil
+    </a>
+    <a href="https://github.com/patilaakash619" target="_blank">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+      GitHub — patilaakash619
+    </a>
+    <a href="https://www.kaggle.com/patilaakash619" target="_blank">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.825 23.859c-.022.092-.117.141-.281.141h-3.139c-.187 0-.351-.082-.492-.248l-5.178-6.589-1.448 1.374v5.111c0 .235-.117.352-.351.352H5.505c-.236 0-.354-.117-.354-.352V.353c0-.233.118-.353.354-.353h2.431c.234 0 .351.12.351.353v14.343l6.203-6.272c.165-.165.33-.246.495-.246h3.239c.144 0 .236.06.285.18.046.149.034.255-.036.315l-6.555 6.344 6.836 8.507c.095.104.117.208.07.334"/></svg>
+      Kaggle — Aakash Patil
+    </a>
+  </div>
+  <div class="footer-copy">ML NOTES · LOGISTIC REGRESSION · © Aakash Patil</div>
+</div>
+
+</body>
+</html>
